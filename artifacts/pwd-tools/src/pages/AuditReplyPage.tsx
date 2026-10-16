@@ -501,12 +501,13 @@ export default function AuditReplyPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate("/")}
-            className="p-1.5 rounded hover:bg-primary/80 shrink-0"
-            title="Home"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-white/20 hover:bg-white/30 border border-white/40 text-white text-xs font-bold shrink-0 transition-colors"
+            title="Back to Home"
           >
-            <ArrowLeft size={16} />
+            <ArrowLeft size={14} />
+            Home
           </button>
-          <FileText className="w-5 h-5 shrink-0" />
+          <FileText className="w-5 h-5 shrink-0 opacity-80" />
           <h1 className="text-base font-bold tracking-tight leading-tight">
             अंकेक्षण प्रतिवेदन उत्तर / Audit Reply Tool — जिला प्रभाग II, उदयपुर
           </h1>
