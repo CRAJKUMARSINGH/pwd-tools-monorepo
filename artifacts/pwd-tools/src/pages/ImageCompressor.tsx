@@ -4,11 +4,12 @@ import piexifjs from "piexifjs";
 import { useRef, useState } from "react";
 import { useLocation } from "wouter";
 
-// ── Location options (extend as needed) ───────────────────────────────────
+// ── Location options — PWD Udaipur subdivisions ────────────────────────────
+// Coordinates sourced from Wikipedia tehsil articles and census data
 const LOCATIONS = [
-  { name: "Gogunda Block", lat: 24.8, lng: 73.7 },
-  { name: "Sayra Block", lat: 24.9, lng: 73.8 },
-  { name: "Bdgaon Block", lat: 25.0, lng: 73.9 },
+  { name: "Gogunda Subdivision", lat: 24.7522, lng: 73.5270 }, // Gogunda tehsil HQ, Udaipur
+  { name: "Iswal (Badgaon Subdiv)", lat: 24.6200, lng: 73.6450 }, // Iswal village, Girwa/Badgaon tehsil
+  { name: "Sayra Subdivision", lat: 24.8100, lng: 73.5100 }, // Sayra village, Gogunda tehsil (pin 313704)
 ];
 
 // ── Diya decoration (matches PWD Tools Suite header style) ─────────────────
@@ -157,6 +158,7 @@ export default function ImageCompressor() {
         maxWidthOrHeight: 1920,
         useWebWorker: true,
         initialQuality: 0.8,
+        fileType: "image/jpeg",
       });
 
       let finalBlob: Blob = compressed;
@@ -435,8 +437,16 @@ export default function ImageCompressor() {
                   {hasGps
                     ? <span style={{ color: "#276749", fontWeight: 600 }}>GPS data preserved ✓</span>
                     : selectedLocation
-                      ? <span style={{ color: "#7B2D00", fontWeight: 600 }}>Location: {selectedLocation}</span>
-                      : <span style={{ color: "#c0392b", fontWeight: 600 }}>No GPS — please select a location</span>
+                      ? <>
+                        <span style={{ color: "#7B2D00", fontWeight: 600, flex: 1 }}>📍 {selectedLocation}</span>
+                        <button
+                          onClick={() => setShowGpsPopup(true)}
+                          style={{ fontSize: "0.75rem", color: "#c0392b", background: "none", border: "none", cursor: "pointer", fontWeight: 700, padding: 0 }}
+                        >
+                          Change
+                        </button>
+                      </>
+                      : <span style={{ color: "#c0392b", fontWeight: 600, cursor: "pointer" }} onClick={() => setShowGpsPopup(true)}>No GPS — tap to select subdivision</span>
                   }
                 </div>
 
@@ -470,8 +480,8 @@ export default function ImageCompressor() {
         {showGpsPopup && (
           <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50 }}>
             <div style={{ background: "linear-gradient(135deg,#fffbf0,#fff8e1)", border: "2px solid #e6a817", borderRadius: "16px", padding: "28px", maxWidth: "360px", width: "100%", margin: "0 16px", boxShadow: "0 20px 60px rgba(0,0,0,0.35)" }}>
-              <div style={{ fontWeight: 800, fontSize: "1.1rem", color: "#7B0D00", marginBottom: "8px" }}>📍 Select Location</div>
-              <p style={{ fontSize: "0.875rem", color: "#7B2D00", marginBottom: "16px" }}>Your photo has no GPS data. Select a block location:</p>
+              <div style={{ fontWeight: 800, fontSize: "1.1rem", color: "#7B0D00", marginBottom: "8px" }}>📍 Select Subdivision</div>
+              <p style={{ fontSize: "0.875rem", color: "#7B2D00", marginBottom: "16px" }}>Your photo has no GPS data. Select the subdivision where this photo was taken:</p>
               <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                 {LOCATIONS.map((loc) => (
                   <button

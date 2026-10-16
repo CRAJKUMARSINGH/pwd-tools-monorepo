@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation } from "wouter";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 type YesNo = "Yes" | "No";

@@ -11,6 +11,7 @@ import { generateDocx } from "@/lib/generate-docx";
 import { generateFreshDocx } from "@/lib/generate-fresh-docx";
 import { saveSnapshot, VAULT_TOOL } from "@/lib/vault";
 import {
+  ArrowLeft,
   Download,
   FileText,
   ImagePlus,
@@ -18,9 +19,10 @@ import {
   Plus,
   Printer,
   Trash2,
-  X,
+  X
 } from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useLocation } from "wouter";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Storage helpers
@@ -489,6 +491,7 @@ function FreshParasTab() {
 type Tab = "existing" | "fresh";
 
 export default function AuditReplyPage() {
+  const [, navigate] = useLocation();
   const [tab, setTab] = useState<Tab>("existing");
 
   return (
@@ -496,6 +499,13 @@ export default function AuditReplyPage() {
       {/* ── Sticky header ────────────────────────────────────────────── */}
       <header className="bg-primary text-primary-foreground py-3 px-5 shadow-md sticky top-0 z-20 print:hidden">
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate("/")}
+            className="p-1.5 rounded hover:bg-primary/80 shrink-0"
+            title="Home"
+          >
+            <ArrowLeft size={16} />
+          </button>
           <FileText className="w-5 h-5 shrink-0" />
           <h1 className="text-base font-bold tracking-tight leading-tight">
             अंकेक्षण प्रतिवेदन उत्तर / Audit Reply Tool — जिला प्रभाग II, उदयपुर
