@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "hello": "tsx ./src/hello.ts",
+    "test:gps": "tsx tests/smoketest-gps.mjs",
+    "test:navigation": "tsx tests/smoketest-navigation.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "devDependencies": {

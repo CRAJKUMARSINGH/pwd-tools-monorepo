@@ -290,24 +290,9 @@
 
 @media print {
 
-  /* ── HEADER / FOOTER SAFETY NET ─────────────────────────────────────────
-     @page margin: 0  →  eliminates the browser header/footer band entirely.
-     @bottom-center   →  if the browser still renders a footer for any reason,
-                         the ONLY text it will show is the attribution below.
-                         No URL, no date, no page number — nothing else.
-  ──────────────────────────────────────────────────────────────────────── */
-  @page {
-    size: A4 portrait;
-    margin: 0;
-    /* kills the band where browser prints URL / date / page number */
-
-    @bottom-center {
-      content: "DRAFTED BY PRIYANKA JAIN, PWD UDAIPUR";
-      font-size: 8pt;
-      font-family: Arial, sans-serif;
-      color: #000;
-    }
-  }
+  /* NOTE: @page is injected per-route by usePrintPage() (src/lib/printPage.ts).
+     A document-scoped @page here would collide with the audit tool's landscape
+     declaration and force every portrait tool to print landscape (E-02). */
 
   /* Suppress any stray <header> or <footer> HTML elements */
   header,
@@ -333,18 +318,32 @@
     width: auto !important;
     height: auto !important;
     min-height: 0 !important;
-    padding: 0 !important;
+    padding: 15mm !important;
+    /* this IS the visible page margin */
     margin: 0 !important;
     box-shadow: none !important;
-    background: transparent !important;
+    background: #fff !important;
     color: black !important;
+  }
+
+  /* Neutralise the slate wrapper so it contributes no padding/background */
+  .print-wrap {
+    padding: 0 !important;
+    overflow: visible !important;
+    background: #fff !important;
   }
 }
 
 /* ── Document Specific ── */
+/* Body/table text is serif (Times New Roman); the office header line and the
+   document title are bold sans (Arial). */
 .doc-font {
-  font-family: Arial, Helvetica, sans-serif !important;
+  font-family: 'Times New Roman', Times, serif !important;
   color: black !important;
+}
+
+.doc-header-font {
+  font-family: Arial, Helvetica, sans-serif !important;
 }
 
 .doc-border-black {
@@ -355,20 +354,21 @@
   background-color: #e8e8e8 !important;
 }
 
-/* Contractor Registration & Document output: compact paragraphs with no generated header/footer content. */
-.contractor-output,
-.contractor-output * {
-  line-height: 1 !important;
+/* Contractor Registration & Document output: scoped rhythm — do NOT blanket-reset
+   line-height/margins, or every Tailwind mb-*/
+leading-* class on the A4 page dies. */ .contractor-output {
+  line-height: 1.35;
 }
 
-.contractor-output p,
+.contractor-output table,
+.contractor-output table * {
+  line-height: 1.25;
+}
+
 .contractor-output h1,
 .contractor-output h2,
-.contractor-output h3,
-.contractor-output div,
-.contractor-output table {
-  margin-top: 0 !important;
-  margin-bottom: 0 !important;
+.contractor-output h3 {
+  margin: 0;
 }
 
 .contractor-output header,
@@ -380,35 +380,23 @@
 
 /* ═══════════════════════════════════════════════════════════════════════════
    AUDIT REPLY TOOL — Print / PDF  (A4 Landscape, 15 mm margins, no colour)
+   Every rule is scoped to `.audit-print` so it cannot bleed into the other
+   print tools (E-02). Orientation comes from usePrintPage("landscape").
    ═══════════════════════════════════════════════════════════════════════════ */
 @media print {
-
-  /* Page setup — A4 landscape, zero @page margin (kills browser header/footer
-     band). Visual 15 mm margins are carried by body padding below.          */
-  @page {
-    size: A4 landscape;
-    margin: 0;
-
-    @bottom-center {
-      content: "DRAFTED BY PRIYANKA JAIN, PWD UDAIPUR";
-      font-size: 8pt;
-      font-family: Arial, sans-serif;
-      color: #000;
-    }
-  }
 
   /* Hide everything that must not appear in the printout */
   header,
   nav,
   .print\:hidden,
-  [class*="sticky"],
-  [class*="tab-bar"] {
+  .audit-print [class*="sticky"],
+  .audit-print [class*="tab-bar"] {
     display: none !important;
   }
 
-  /* Reset body for clean white print — padding carries the 15 mm margin
-     (cannot use @page margin: visual margins must live here per spec §11.1) */
-  body {
+  /* The container carries the 15 mm visual margin. There is no @page margin
+     here — the app-wide @page is injected once by usePrintPage(). */
+  .audit-print {
     background: white !important;
     color: black !important;
     font-family: "Mangal", Arial, sans-serif !important;
@@ -455,7 +443,7 @@
   }
 
   /* Textareas render their value as plain text inside the cell */
-  textarea {
+  .audit-print textarea {
     border: none !important;
     background: transparent !important;
     color: black !important;
@@ -470,9 +458,9 @@
   }
 
   /* Fresh para cards: no border/shadow, flush */
-  .rounded-xl,
-  .shadow-sm,
-  .border-2 {
+  .audit-print .rounded-xl,
+  .audit-print .shadow-sm,
+  .audit-print .border-2 {
     border: none !important;
     box-shadow: none !important;
     border-radius: 0 !important;
@@ -487,11 +475,11 @@
   }
 
   /* Page break control */
-  tr {
+  .audit-print tr {
     page-break-inside: avoid !important;
   }
 
-  thead {
+  .audit-print thead {
     display: table-header-group !important;
   }
 }

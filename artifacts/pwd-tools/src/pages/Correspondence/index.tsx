@@ -7,6 +7,8 @@
  * All child components (LetterList, LetterForm, LetterDetail) are unchanged —
  * they receive the same props regardless of which data source is active.
  */
+import ToolShell from "@/components/ToolShell";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Mail, WifiOff } from "lucide-react";
 import { useCallback, useState } from "react";
@@ -228,5 +230,10 @@ function PageShell({ children, apiMode }: { children: React.ReactNode; apiMode: 
 // ── Entry point — picks mode at import time ───────────────────────────────
 
 export default function CorrespondencePage() {
-  return API_ENABLED ? <CorrespondencePageAPI /> : <CorrespondencePageLocal />;
+  useDocumentTitle("Correspondence");
+  return (
+    <ToolShell title="Correspondence">
+      {API_ENABLED ? <CorrespondencePageAPI /> : <CorrespondencePageLocal />}
+    </ToolShell>
+  );
 }

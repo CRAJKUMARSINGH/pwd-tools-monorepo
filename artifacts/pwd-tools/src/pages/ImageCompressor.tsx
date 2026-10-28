@@ -1,16 +1,19 @@
 import imageCompression from "browser-image-compression";
 import { Download, Home as HomeIcon, MapPin, Plus, X } from "lucide-react";
-import piexifjs from "piexifjs";
 import { useRef, useState } from "react";
 import { useLocation } from "wouter";
 
-// ── Location options — PWD Udaipur subdivisions ────────────────────────────
-// Coordinates sourced from Wikipedia tehsil articles and census data
-const LOCATIONS = [
-  { name: "Gogunda Subdivision", lat: 24.7522, lng: 73.5270 }, // Gogunda tehsil HQ, Udaipur
-  { name: "Iswal (Badgaon Subdiv)", lat: 24.6200, lng: 73.6450 }, // Iswal village, Girwa/Badgaon tehsil
-  { name: "Sayra Subdivision", lat: 24.8100, lng: 73.5100 }, // Sayra village, Gogunda tehsil (pin 313704)
-];
+import { DEFAULT_LOCATION_NAME, PWD_LOCATIONS } from "@/data/pwdLocations";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
+import {
+  composeExif,
+  gmapsUrl,
+  injectExif,
+  readExifFromFile,
+  readGps,
+  type ExifIfds,
+  type GpsDetails,
+} from "@/lib/exif";
 
 // ── Diya decoration (matches PWD Tools Suite header style) ─────────────────
 const DIYAS = [
@@ -40,93 +43,26 @@ function Diyas() {
   );
 }
 
-// ── Helpers ────────────────────────────────────────────────────────────────
-function arrayBufferToBase64(buffer: ArrayBuffer): string {
-  let binary = "";
-  const bytes = new Uint8Array(buffer);
-  for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
-  return window.btoa(binary);
-}
-
-type ExifData = {
-  "0th": Record<string, any>;
-  Exif: Record<string, any>;
-  GPS: Record<string, any>;
-  Interop: Record<string, any>;
-  "1st": Record<string, any>;
-  thumbnail: string | null;
-};
-
-function createEmptyExif(): ExifData {
-  return {
-    "0th": {},
-    Exif: {},
-    GPS: {},
-    Interop: {},
-    "1st": {},
-    thumbnail: null,
-  };
-}
-
-function decimalToDmsRational(value: number): [number, number][] {
-  const absolute = Math.abs(value);
-  const degrees = Math.floor(absolute);
-  const minutesFloat = (absolute - degrees) * 60;
-  const minutes = Math.floor(minutesFloat);
-  const seconds = (minutesFloat - minutes) * 60;
-
-  return [
-    [degrees, 1],
-    [minutes, 1],
-    [Math.round(seconds * 10000), 10000],
-  ];
-}
-
-function buildGpsIfd(lat: number, lng: number) {
-  return {
-    [piexifjs.GPSIFD.GPSVersionID]: [2, 3, 0, 0],
-    [piexifjs.GPSIFD.GPSLatitudeRef]: lat >= 0 ? "N" : "S",
-    [piexifjs.GPSIFD.GPSLatitude]: decimalToDmsRational(lat),
-    [piexifjs.GPSIFD.GPSLongitudeRef]: lng >= 0 ? "E" : "W",
-    [piexifjs.GPSIFD.GPSLongitude]: decimalToDmsRational(lng),
-    [piexifjs.GPSIFD.GPSMapDatum]: "WGS-84",
-  };
-}
-
-/** Read file, parse EXIF via piexifjs, return EXIF object + whether GPS tags exist */
-function readExif(file: File): Promise<{ exif: ExifData | null; hasGps: boolean }> {
-  return new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const base64 = arrayBufferToBase64(e.target?.result as ArrayBuffer);
-        const dataUrl = `data:image/jpeg;base64,${base64}`;
-        const exifObj = piexifjs.load(dataUrl) as ExifData;
-        // GPS IFD key is "GPS" in piexifjs; check if it has any entries
-        const gpsData = exifObj["GPS"] ?? {};
-        const hasGps = Object.keys(gpsData).length > 0;
-        resolve({ exif: exifObj, hasGps });
-      } catch {
-        // Non-JPEG or no EXIF at all — treat as no GPS
-        resolve({ exif: null, hasGps: false });
-      }
-    };
-    reader.onerror = () => resolve({ exif: null, hasGps: false });
-    reader.readAsArrayBuffer(file);
-  });
-}
+type GpsTab = "preset" | "device" | "manual";
 
 // ── Component ──────────────────────────────────────────────────────────────
 export default function ImageCompressor() {
+  useDocumentTitle("Image Compressor");
   const [, navigate] = useLocation();
 
   const [image, setImage] = useState<File | null>(null);
   const [preview, setPreview] = useState<string>("");
+  const [exifData, setExifData] = useState<ExifIfds | null>(null);
+  const [sourceGps, setSourceGps] = useState<GpsDetails | null>(null);
+  const [gps, setGps] = useState<GpsDetails | null>(null);
+  const [gpsVerified, setGpsVerified] = useState<boolean | null>(null);
+  const [gpsError, setGpsError] = useState<string>("");
   const [showGpsPopup, setShowGpsPopup] = useState(false);
-  const [selectedLocation, setSelectedLocation] = useState("");
-  const [hasGps, setHasGps] = useState(false);
+  const [gpsTab, setGpsTab] = useState<GpsTab>("preset");
+  const [manualLat, setManualLat] = useState("");
+  const [manualLng, setManualLng] = useState("");
+  const [locating, setLocating] = useState(false);
   const [processing, setProcessing] = useState(false);
-  const [exifData, setExifData] = useState<ExifData | null>(null);
   const [contractorName, setContractorName] = useState("");
   const [roadName, setRoadName] = useState("");
   const [downloadComplete, setDownloadComplete] = useState(false);
@@ -137,10 +73,31 @@ export default function ImageCompressor() {
   const handleFileSelect = async (file: File) => {
     setImage(file);
     setPreview(URL.createObjectURL(file));
-    const { exif, hasGps } = await readExif(file);
+    setGpsVerified(null);
+    setGpsError("");
+
+    if (!/^image\/jpe?g$/i.test(file.type)) {
+      setGpsError(`${file.type || "Unknown type"} carries no EXIF — convert to JPEG first.`);
+    }
+
+    const exif = await readExifFromFile(file);
     setExifData(exif);
-    setHasGps(hasGps);
-    if (!hasGps) setShowGpsPopup(true);
+
+    const found = readGps(exif);
+    setSourceGps(found);
+
+    // Reuse last chosen subdivision so batch entry is one tap, not three.
+    const remembered = localStorage.getItem("pwd.lastLocation");
+    const preset = PWD_LOCATIONS.find((l) => l.name === remembered);
+
+    if (found) {
+      setGps(found);
+    } else if (preset) {
+      setGps({ latitude: preset.lat, longitude: preset.lng, source: "preset" });
+    } else {
+      setGps(null);
+      setShowGpsPopup(true);
+    }
   };
 
   const handleInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -154,63 +111,36 @@ export default function ImageCompressor() {
     setProcessing(true);
     try {
       const compressed = await imageCompression(image, {
-        maxSizeMB: 0.25,
+        maxSizeMB: 0.24,          // ← was 0.25 (=256 KB). 0.24 = 245 KB, stays under a 250 KB cap
         maxWidthOrHeight: 1920,
         useWebWorker: true,
         initialQuality: 0.8,
         fileType: "image/jpeg",
+        preserveExif: false,      // explicit — we re-inject authoritatively
       });
 
+      const nextExif = exifData || gps ? composeExif(exifData, gps) : null;
+
       let finalBlob: Blob = compressed;
-
-      const selectedLocationDetails = !hasGps
-        ? LOCATIONS.find((loc) => loc.name === selectedLocation)
-        : undefined;
-
-      const nextExif: ExifData | null = (() => {
-        if (!exifData && !selectedLocationDetails) return null;
-
-        const baseExif = exifData
-          ? JSON.parse(JSON.stringify(exifData)) as ExifData
-          : createEmptyExif();
-
-        if (selectedLocationDetails) {
-          baseExif.GPS = buildGpsIfd(selectedLocationDetails.lat, selectedLocationDetails.lng);
-        }
-
-        return baseExif;
-      })();
-
-      // Re-inject existing EXIF and add GPS when user selected a location
       if (nextExif) {
-        finalBlob = await new Promise<Blob>((resolve) => {
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            try {
-              const base64 = arrayBufferToBase64(e.target?.result as ArrayBuffer);
-              const dump = piexifjs.dump(nextExif);
-              const inserted = piexifjs.insert(dump, `data:image/jpeg;base64,${base64}`);
-              const bin = window.atob(inserted.split(",")[1]);
-              const bytes = new Uint8Array(bin.length);
-              for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-              resolve(new Blob([bytes], { type: "image/jpeg" }));
-            } catch {
-              resolve(compressed);
-            }
-          };
-          reader.readAsArrayBuffer(compressed);
-        });
+        const res = await injectExif(compressed, nextExif, /* expectGps */ !!gps);
+        finalBlob = res.blob;
+        setGpsVerified(res.ok);
+        setGpsError(res.ok ? "" : (res.error ?? "Metadata could not be written."));
       }
 
       const timestamp = new Date().toISOString().slice(0, 10);
       const safeContractor = contractorName.replace(/[^a-zA-Z0-9]/g, "_");
       const safeRoad = roadName.replace(/[^a-zA-Z0-9]/g, "_");
-      const locationTag = hasGps ? "GPS" : selectedLocation.replace(/\s+/g, "_");
+      const tag = gps
+        ? (gps.source === "exif" ? "GPS" : `${gps.latitude.toFixed(5)}_${gps.longitude.toFixed(5)}`)
+        : "NOGPS";
 
       const link = document.createElement("a");
       link.href = URL.createObjectURL(finalBlob);
-      link.download = `${safeContractor}_${safeRoad}_${locationTag}_${timestamp}.jpg`;
+      link.download = `${safeContractor}_${safeRoad}_${tag}_${timestamp}.jpg`;
       link.click();
+      URL.revokeObjectURL(link.href);
 
       setDownloadComplete(true);
     } catch (err) {
@@ -222,12 +152,18 @@ export default function ImageCompressor() {
 
   // ── Reset ───────────────────────────────────────────────────────────────
   const reset = () => {
+    if (preview) URL.revokeObjectURL(preview);
     setImage(null);
     setPreview("");
     setShowGpsPopup(false);
-    setSelectedLocation("");
-    setHasGps(false);
+    setGpsTab("preset");
     setExifData(null);
+    setSourceGps(null);
+    setGps(null);
+    setGpsVerified(null);
+    setGpsError("");
+    setManualLat("");
+    setManualLng("");
     setContractorName("");
     setRoadName("");
     setDownloadComplete(false);
@@ -237,6 +173,37 @@ export default function ImageCompressor() {
   const handleNextPhoto = () => {
     reset();
     setTimeout(() => fileInputRef.current?.click(), 100);
+  };
+
+  const useDeviceLocation = () => {
+    if (!navigator.geolocation) { setGpsError("Geolocation unsupported"); return; }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setGps({
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+          altitude: pos.coords.altitude,
+          accuracy: pos.coords.accuracy,
+          timestampUtc: new Date(pos.timestamp),
+          source: "device",
+        });
+        setGpsError("");
+        setLocating(false);
+        setShowGpsPopup(false);
+      },
+      (err) => { setGpsError(err.message); setLocating(false); },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
+    );
+  };
+
+  const useManualLocation = () => {
+    const lat = Number(manualLat), lng = Number(manualLng);
+    if (!Number.isFinite(lat) || lat < -90 || lat > 90) { setGpsError("Latitude must be −90…90"); return; }
+    if (!Number.isFinite(lng) || lng < -180 || lng > 180) { setGpsError("Longitude must be −180…180"); return; }
+    setGps({ latitude: lat, longitude: lng, source: "manual" });
+    setGpsError("");
+    setShowGpsPopup(false);
   };
 
   // ── Render ──────────────────────────────────────────────────────────────
@@ -348,6 +315,19 @@ export default function ImageCompressor() {
           font-weight: 600;
         }
         .ic-location-btn:hover { background: #fff3e0; border-color: #c0392b; }
+
+        .ic-tab {
+          flex: 1;
+          padding: 8px 10px;
+          border-radius: 8px;
+          border: 1.5px solid #e6a817;
+          background: #fffbf0;
+          color: #7B2D00;
+          font-weight: 700;
+          font-size: 0.8rem;
+          cursor: pointer;
+        }
+        .ic-tab[aria-selected="true"] { background: #7B0D00; color: #FFD700; border-color: #7B0D00; }
       `}</style>
 
       <div style={{ minHeight: "100vh", background: "linear-gradient(160deg, #fff8e1 0%, #fff3e0 40%, #fce4ec 100%)", fontFamily: "'Noto Sans Devanagari','Segoe UI',sans-serif" }}>
@@ -393,7 +373,7 @@ export default function ImageCompressor() {
                   <input
                     ref={fileInputRef}
                     type="file"
-                    accept="image/*"
+                    accept="image/jpeg,image/jpg"
                     onChange={handleInputChange}
                     style={{ display: "none" }}
                   />
@@ -403,7 +383,7 @@ export default function ImageCompressor() {
                 <div style={{ marginTop: "20px", padding: "14px 16px", background: "linear-gradient(135deg,#fff3e0,#fce4ec)", border: "1px solid #e6a817", borderRadius: "10px", fontSize: "0.85rem", color: "#7B2D00" }}>
                   <div style={{ fontWeight: 700, marginBottom: "6px" }}>🪔 How it works</div>
                   <ul style={{ paddingLeft: "18px", margin: 0, lineHeight: 1.8 }}>
-                    <li>Upload any JPEG / PNG photo</li>
+                    <li>Upload a JPEG photo</li>
                     <li>GPS &amp; EXIF metadata preserved</li>
                     <li>Output: 250 KB JPEG, ready for PWD portal</li>
                   </ul>
@@ -427,28 +407,46 @@ export default function ImageCompressor() {
                   </button>
                 </div>
 
-                {/* GPS badge */}
-                <div style={{
-                  display: "flex", alignItems: "center", gap: "8px", fontSize: "0.875rem", padding: "8px 12px", borderRadius: "8px",
-                  background: hasGps ? "#f0fff4" : selectedLocation ? "#fff8e1" : "#fff3e0",
-                  border: `1px solid ${hasGps ? "#38a169" : selectedLocation ? "#e6a817" : "#e67e22"}`,
-                }}>
-                  <MapPin size={16} color={hasGps ? "#38a169" : selectedLocation ? "#e6a817" : "#e67e22"} />
-                  {hasGps
-                    ? <span style={{ color: "#276749", fontWeight: 600 }}>GPS data preserved ✓</span>
-                    : selectedLocation
-                      ? <>
-                        <span style={{ color: "#7B2D00", fontWeight: 600, flex: 1 }}>📍 {selectedLocation}</span>
-                        <button
-                          onClick={() => setShowGpsPopup(true)}
-                          style={{ fontSize: "0.75rem", color: "#c0392b", background: "none", border: "none", cursor: "pointer", fontWeight: 700, padding: 0 }}
-                        >
-                          Change
-                        </button>
-                      </>
-                      : <span style={{ color: "#c0392b", fontWeight: 600, cursor: "pointer" }} onClick={() => setShowGpsPopup(true)}>No GPS — tap to select subdivision</span>
-                  }
-                </div>
+                {/* GPS panel — show the details, don't just badge them */}
+                {gps ? (
+                  <div style={{ fontSize: "0.8rem", background: "#f0fff4", border: "1px solid #38a169", borderRadius: "8px", padding: "10px 12px", color: "#22543d" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 700 }}>
+                      <MapPin size={15} />
+                      {gps.source === "exif" ? "GPS preserved from photo" : `GPS added — ${gps.source}`}
+                    </div>
+                    <div style={{ fontFamily: "monospace", marginTop: 6 }}>
+                      {gps.latitude.toFixed(6)}, {gps.longitude.toFixed(6)}
+                      {gps.altitude != null && <> · {gps.altitude.toFixed(1)} m</>}
+                      {gps.accuracy != null && <> · ±{gps.accuracy.toFixed(1)} m</>}
+                    </div>
+                    {gps.timestampUtc && (
+                      <div style={{ marginTop: 2 }}>{gps.timestampUtc.toISOString().replace("T", " ").slice(0, 19)} UTC</div>
+                    )}
+                    <div style={{ marginTop: 8, display: "flex", gap: 12 }}>
+                      <a href={gmapsUrl(gps.latitude, gps.longitude)} target="_blank" rel="noreferrer">Open in Maps</a>
+                      <button onClick={() => setShowGpsPopup(true)} style={{ background: "none", border: "none", color: "#22543d", cursor: "pointer", fontWeight: 700, padding: 0 }}>Change</button>
+                      {gps.source !== "exif" && (
+                        <button onClick={() => setGps(sourceGps)} style={{ background: "none", border: "none", color: "#22543d", cursor: "pointer", fontWeight: 700, padding: 0 }}>Revert to photo GPS</button>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    className="ic-btn-secondary"
+                    onClick={() => setShowGpsPopup(true)}
+                    style={{ justifyContent: "flex-start" }}
+                  >
+                    <MapPin size={16} color="#c0392b" />
+                    <span style={{ color: "#c0392b" }}>No GPS — tap to add a location</span>
+                  </button>
+                )}
+
+                {gpsError && <div style={{ color: "#c0392b", fontSize: "0.8rem" }}>⚠️ {gpsError}</div>}
+                {gpsVerified === false && (
+                  <div style={{ color: "#c0392b", fontSize: "0.8rem" }}>
+                    ⚠️ Metadata could not be verified in the output file — do not upload yet.
+                  </div>
+                )}
 
                 {/* Fields */}
                 <div>
@@ -464,7 +462,7 @@ export default function ImageCompressor() {
                 <button
                   className="ic-btn-primary"
                   onClick={compressImage}
-                  disabled={processing || (!hasGps && !selectedLocation) || !contractorName || !roadName}
+                  disabled={processing || !gps || !contractorName || !roadName}
                 >
                   {processing
                     ? "⏳ Processing..."
@@ -476,24 +474,74 @@ export default function ImageCompressor() {
           </div>
         </div>
 
-        {/* ── GPS Location Popup ── */}
+        {/* ── GPS Location Popup — Preset · My location · Manual ── */}
         {showGpsPopup && (
           <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50 }}>
-            <div style={{ background: "linear-gradient(135deg,#fffbf0,#fff8e1)", border: "2px solid #e6a817", borderRadius: "16px", padding: "28px", maxWidth: "360px", width: "100%", margin: "0 16px", boxShadow: "0 20px 60px rgba(0,0,0,0.35)" }}>
-              <div style={{ fontWeight: 800, fontSize: "1.1rem", color: "#7B0D00", marginBottom: "8px" }}>📍 Select Subdivision</div>
-              <p style={{ fontSize: "0.875rem", color: "#7B2D00", marginBottom: "16px" }}>Your photo has no GPS data. Select the subdivision where this photo was taken:</p>
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                {LOCATIONS.map((loc) => (
+            <div style={{ background: "linear-gradient(135deg,#fffbf0,#fff8e1)", border: "2px solid #e6a817", borderRadius: "16px", padding: "24px", maxWidth: "380px", width: "100%", margin: "0 16px", boxShadow: "0 20px 60px rgba(0,0,0,0.35)", maxHeight: "88vh", display: "flex", flexDirection: "column" }}>
+              <div style={{ fontWeight: 800, fontSize: "1.1rem", color: "#7B0D00", marginBottom: "8px" }}>📍 Set photo location</div>
+              <p style={{ fontSize: "0.85rem", color: "#7B2D00", marginTop: 0, marginBottom: "14px" }}>
+                {sourceGps ? "This photo already has GPS. Choosing a new location overrides it." : "Choose how to set the coordinates for this photo:"}
+              </p>
+
+              <div style={{ display: "flex", gap: "8px", marginBottom: "14px" }}>
+                <button className="ic-tab" aria-selected={gpsTab === "preset"} onClick={() => setGpsTab("preset")}>Subdivision</button>
+                <button className="ic-tab" aria-selected={gpsTab === "device"} onClick={() => setGpsTab("device")}>My location</button>
+                <button className="ic-tab" aria-selected={gpsTab === "manual"} onClick={() => setGpsTab("manual")}>Manual</button>
+              </div>
+
+              <div style={{ overflowY: "auto", flex: 1, display: "flex", flexDirection: "column", gap: "8px" }}>
+                {gpsTab === "preset" && PWD_LOCATIONS.map((loc) => (
                   <button
                     key={loc.name}
                     className="ic-location-btn"
-                    onClick={() => { setSelectedLocation(loc.name); setShowGpsPopup(false); }}
+                    onClick={() => {
+                      setGps({ latitude: loc.lat, longitude: loc.lng, source: "preset" });
+                      localStorage.setItem("pwd.lastLocation", loc.name);
+                      setGpsError("");
+                      setShowGpsPopup(false);
+                    }}
                   >
                     <MapPin size={16} color="#c0392b" style={{ flexShrink: 0 }} />
-                    {loc.name}
+                    <span style={{ flex: 1 }}>{loc.name}</span>
+                    <span style={{ fontSize: "0.7rem", opacity: 0.7 }}>{loc.division}</span>
                   </button>
                 ))}
+
+                {gpsTab === "device" && (
+                  <>
+                    <button className="ic-btn-secondary" disabled={locating} onClick={useDeviceLocation}>
+                      <MapPin size={18} /> {locating ? "Locating…" : "Use my current location"}
+                    </button>
+                    <div style={{ fontSize: "0.75rem", color: "#7B2D00", opacity: 0.8 }}>
+                      Writes the device coordinates plus altitude, accuracy and a UTC stamp. Default:{' '}
+                      {DEFAULT_LOCATION_NAME}.
+                    </div>
+                  </>
+                )}
+
+                {gpsTab === "manual" && (
+                  <>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <input className="ic-input" inputMode="decimal" placeholder="24.585400" value={manualLat}
+                        onChange={(e) => setManualLat(e.target.value)} />
+                      <input className="ic-input" inputMode="decimal" placeholder="73.712500" value={manualLng}
+                        onChange={(e) => setManualLng(e.target.value)} />
+                    </div>
+                    <button className="ic-btn-primary" onClick={useManualLocation}>
+                      Use these coordinates
+                    </button>
+                  </>
+                )}
               </div>
+
+              {gpsError && <div style={{ color: "#c0392b", fontSize: "0.8rem", marginTop: "10px" }}>⚠️ {gpsError}</div>}
+
+              <button
+                onClick={() => setShowGpsPopup(false)}
+                style={{ marginTop: "14px", background: "none", border: "none", color: "#7B2D00", cursor: "pointer", fontWeight: 700, fontSize: "0.85rem" }}
+              >
+                Cancel
+              </button>
             </div>
           </div>
         )}
@@ -502,9 +550,15 @@ export default function ImageCompressor() {
         {downloadComplete && (
           <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50 }}>
             <div style={{ background: "linear-gradient(135deg,#fffbf0,#fff8e1)", border: "2px solid #e6a817", borderRadius: "16px", padding: "32px", maxWidth: "360px", width: "100%", margin: "0 16px", boxShadow: "0 20px 60px rgba(0,0,0,0.35)", textAlign: "center" }}>
-              <div style={{ fontSize: "56px", marginBottom: "12px" }}>✅</div>
-              <div style={{ fontWeight: 800, fontSize: "1.25rem", color: "#7B0D00", marginBottom: "8px" }}>Download Complete!</div>
-              <div style={{ fontSize: "0.875rem", color: "#7B2D00", marginBottom: "24px" }}>Your image has been compressed and saved.</div>
+              <div style={{ fontSize: "56px", marginBottom: "12px" }}>{gpsVerified === false ? "⚠️" : "✅"}</div>
+              <div style={{ fontWeight: 800, fontSize: "1.25rem", color: "#7B0D00", marginBottom: "8px" }}>
+                {gpsVerified === false ? "Saved — metadata unverified" : "Download Complete!"}
+              </div>
+              <div style={{ fontSize: "0.875rem", color: "#7B2D00", marginBottom: "24px" }}>
+                {gpsVerified === false
+                  ? "The file downloaded, but the GPS/EXIF metadata could not be verified. Do not upload it to the portal until you re-check the coordinates."
+                  : "Your image has been compressed and saved."}
+              </div>
               <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                 <button className="ic-btn-primary" onClick={handleNextPhoto}>
                   <Plus size={20} /> Next Photo

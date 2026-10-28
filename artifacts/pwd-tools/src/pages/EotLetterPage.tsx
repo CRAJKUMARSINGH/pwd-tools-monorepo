@@ -2,6 +2,9 @@
  * Extension of Time (EOT) Letter Generator
  * Generates Hindi A4 EOT application / sanction letter with DOCX download.
  */
+import ToolShell from "@/components/ToolShell";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
+import { usePrintPage } from "@/lib/printPage";
 import { AlignmentType, Document, Packer, PageOrientation, Paragraph, TextRun } from "docx";
 import { saveAs } from "file-saver";
 import { ArrowLeft, CalendarClock, Download } from "lucide-react";
@@ -31,6 +34,8 @@ function today() {
 }
 
 export default function EotLetterPage() {
+  useDocumentTitle("EOT Letter");
+  usePrintPage();
   const [, go] = useLocation();
   const [form, setForm] = useState({
     eotType: "sanction",
@@ -111,74 +116,76 @@ export default function EotLetterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-teal-50">
-      <div className="bg-teal-700 text-white px-6 py-3 flex items-center gap-3 shadow">
-        <button onClick={() => go("/")} className="p-1.5 rounded hover:bg-teal-600"><ArrowLeft size={16} /></button>
-        <CalendarClock size={18} />
-        <div className="flex-1">
-          <h1 className="font-bold text-sm">Extension of Time (EOT) Letter</h1>
-          <p className="text-teal-200 text-xs">समय विस्तार आवेदन / स्वीकृति / अस्वीकृति — A4 DOCX</p>
-        </div>
-        <button onClick={downloadDocx} className="flex items-center gap-1.5 px-3 py-1.5 bg-white text-teal-800 rounded text-xs font-bold">
-          <Download size={13} /> DOCX
-        </button>
-      </div>
-
-      <div className="max-w-6xl mx-auto p-4 flex gap-4">
-        <div className="w-[400px] shrink-0 flex flex-col gap-3">
-          <div><label className={LBL}>पत्र का प्रकार</label>
-            <select className={INP} value={form.eotType} onChange={set("eotType")}>
-              {EOT_TYPES.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
-            </select>
+    <ToolShell title="EOT Letter">
+      <div className="min-h-[100dvh] bg-teal-50">
+        <div className="bg-teal-700 text-white px-6 py-3 flex items-center gap-3 shadow">
+          <button onClick={() => go("/")} className="p-1.5 rounded hover:bg-teal-600"><ArrowLeft size={16} /></button>
+          <CalendarClock size={18} />
+          <div className="flex-1">
+            <h1 className="font-bold text-sm">Extension of Time (EOT) Letter</h1>
+            <p className="text-teal-200 text-xs">समय विस्तार आवेदन / स्वीकृति / अस्वीकृति — A4 DOCX</p>
           </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div><label className={LBL}>क्रमांक</label><input className={INP} value={form.letterNumber} onChange={set("letterNumber")} /></div>
-            <div><label className={LBL}>दिनांक</label><input className={INP} value={form.date} onChange={set("date")} /></div>
-          </div>
-          <div><label className={LBL}>ठेकेदार का नाम</label><input className={INP} value={form.contractorName} onChange={set("contractorName")} /></div>
-          <div><label className={LBL}>पता</label><textarea className={TA} rows={2} value={form.contractorAddress} onChange={set("contractorAddress")} /></div>
-          <div><label className={LBL}>अनुबंध संख्या</label><input className={INP} value={form.agreementNumber} onChange={set("agreementNumber")} /></div>
-          <div><label className={LBL}>कार्य का नाम</label><textarea className={TA} rows={2} value={form.nameOfWork} onChange={set("nameOfWork")} /></div>
-          <div className="grid grid-cols-2 gap-2">
-            <div><label className={LBL}>मूल पूर्णता तिथि</label><input className={INP} value={form.originalCompletionDate} onChange={set("originalCompletionDate")} /></div>
-            <div><label className={LBL}>संशोधित पूर्णता तिथि</label><input className={INP} value={form.extendedCompletionDate} onChange={set("extendedCompletionDate")} /></div>
-          </div>
-          <div><label className={LBL}>विस्तार (दिन)</label><input className={INP} value={form.extensionDays} onChange={set("extensionDays")} /></div>
-          <div><label className={LBL}>विलम्ब का कारण</label><textarea className={TA} rows={3} value={form.reasonForDelay} onChange={set("reasonForDelay")} /></div>
-          <div className="grid grid-cols-2 gap-2">
-            <div><label className={LBL}>L.D. लागू</label>
-              <select className={INP} value={form.ldApplicable} onChange={set("ldApplicable")}>
-                <option>नहीं</option><option>हाँ</option>
-              </select>
-            </div>
-            {form.ldApplicable === "हाँ" && <div><label className={LBL}>L.D. राशि (रु.)</label><input className={INP} value={form.ldAmount} onChange={set("ldAmount")} /></div>}
-          </div>
-          <div><label className={LBL}>टिप्पणी (वैकल्पिक)</label><textarea className={TA} rows={2} value={form.remarks} onChange={set("remarks")} /></div>
-          <button onClick={downloadDocx} className="w-full py-3 bg-teal-700 text-white rounded-lg font-bold text-sm hover:bg-teal-800 flex items-center justify-center gap-2">
-            <Download size={16} /> Download Word (.docx)
+          <button onClick={downloadDocx} className="flex items-center gap-1.5 px-3 py-1.5 bg-white text-teal-800 rounded text-xs font-bold">
+            <Download size={13} /> DOCX
           </button>
         </div>
 
-        <div className="flex-1 bg-white border border-gray-200 rounded shadow p-8 text-sm font-serif" style={{ minHeight: "297mm", maxWidth: "210mm" }}>
-          <div className="text-center font-bold text-base mb-1">राजस्थान सरकार</div>
-          <div className="text-center font-bold">{form.fromDesignation}, सार्वजनिक निर्माण विभाग</div>
-          <div className="text-center font-bold text-sm mb-2">{form.fromOffice}</div>
-          <hr className="border-black mb-2" />
-          <div className="flex justify-between text-xs mb-2"><span>क्रमांकः {form.letterNumber}</span><span>दिनांकः {form.date}</span></div>
-          <div className="text-xs mb-2">{form.contractorName},<br />{form.contractorAddress}।</div>
-          <p className="text-xs font-bold mb-1">विषय:– {form.nameOfWork} — EOT {form.eotType === "sanction" ? "स्वीकृति" : form.eotType === "rejection" ? "अस्वीकृति" : "आवेदन"}</p>
-          <p className="text-xs mb-1">संदर्भ: अनुबंध संख्या {form.agreementNumber}</p>
-          <p className="text-xs mb-2">महोदय,</p>
-          <p className="text-xs text-justify mb-1">मूल पूर्णता तिथि: {form.originalCompletionDate}</p>
-          <p className="text-xs text-justify mb-1">विलम्ब कारण: {form.reasonForDelay}</p>
-          {form.eotType === "sanction" && <p className="text-xs text-justify mb-1">{form.extensionDays} दिन EOT स्वीकृत। संशोधित पूर्णता: {form.extendedCompletionDate}।</p>}
-          {form.eotType === "rejection" && <p className="text-xs text-justify mb-1">EOT आवेदन अस्वीकृत। L.D. वसूल की जाएगी।</p>}
-          <p className="text-xs mb-6 mt-4">भवदीय,</p>
-          <p className="text-xs font-bold">({form.fromName})</p>
-          <p className="text-xs">{form.fromDesignation}</p>
-          <p className="text-xs">{form.fromOffice}</p>
+        <div className="max-w-6xl mx-auto p-4 flex gap-4">
+          <div className="w-[400px] shrink-0 flex flex-col gap-3">
+            <div><label className={LBL}>पत्र का प्रकार</label>
+              <select className={INP} value={form.eotType} onChange={set("eotType")}>
+                {EOT_TYPES.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
+              </select>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div><label className={LBL}>क्रमांक</label><input className={INP} value={form.letterNumber} onChange={set("letterNumber")} /></div>
+              <div><label className={LBL}>दिनांक</label><input className={INP} value={form.date} onChange={set("date")} /></div>
+            </div>
+            <div><label className={LBL}>ठेकेदार का नाम</label><input className={INP} value={form.contractorName} onChange={set("contractorName")} /></div>
+            <div><label className={LBL}>पता</label><textarea className={TA} rows={2} value={form.contractorAddress} onChange={set("contractorAddress")} /></div>
+            <div><label className={LBL}>अनुबंध संख्या</label><input className={INP} value={form.agreementNumber} onChange={set("agreementNumber")} /></div>
+            <div><label className={LBL}>कार्य का नाम</label><textarea className={TA} rows={2} value={form.nameOfWork} onChange={set("nameOfWork")} /></div>
+            <div className="grid grid-cols-2 gap-2">
+              <div><label className={LBL}>मूल पूर्णता तिथि</label><input className={INP} value={form.originalCompletionDate} onChange={set("originalCompletionDate")} /></div>
+              <div><label className={LBL}>संशोधित पूर्णता तिथि</label><input className={INP} value={form.extendedCompletionDate} onChange={set("extendedCompletionDate")} /></div>
+            </div>
+            <div><label className={LBL}>विस्तार (दिन)</label><input className={INP} value={form.extensionDays} onChange={set("extensionDays")} /></div>
+            <div><label className={LBL}>विलम्ब का कारण</label><textarea className={TA} rows={3} value={form.reasonForDelay} onChange={set("reasonForDelay")} /></div>
+            <div className="grid grid-cols-2 gap-2">
+              <div><label className={LBL}>L.D. लागू</label>
+                <select className={INP} value={form.ldApplicable} onChange={set("ldApplicable")}>
+                  <option>नहीं</option><option>हाँ</option>
+                </select>
+              </div>
+              {form.ldApplicable === "हाँ" && <div><label className={LBL}>L.D. राशि (रु.)</label><input className={INP} value={form.ldAmount} onChange={set("ldAmount")} /></div>}
+            </div>
+            <div><label className={LBL}>टिप्पणी (वैकल्पिक)</label><textarea className={TA} rows={2} value={form.remarks} onChange={set("remarks")} /></div>
+            <button onClick={downloadDocx} className="w-full py-3 bg-teal-700 text-white rounded-lg font-bold text-sm hover:bg-teal-800 flex items-center justify-center gap-2">
+              <Download size={16} /> Download Word (.docx)
+            </button>
+          </div>
+
+          <div className="flex-1 bg-white border border-gray-200 rounded shadow p-8 text-sm font-serif" style={{ minHeight: "297mm", maxWidth: "210mm" }}>
+            <div className="text-center font-bold text-base mb-1">राजस्थान सरकार</div>
+            <div className="text-center font-bold">{form.fromDesignation}, सार्वजनिक निर्माण विभाग</div>
+            <div className="text-center font-bold text-sm mb-2">{form.fromOffice}</div>
+            <hr className="border-black mb-2" />
+            <div className="flex justify-between text-xs mb-2"><span>क्रमांकः {form.letterNumber}</span><span>दिनांकः {form.date}</span></div>
+            <div className="text-xs mb-2">{form.contractorName},<br />{form.contractorAddress}।</div>
+            <p className="text-xs font-bold mb-1">विषय:– {form.nameOfWork} — EOT {form.eotType === "sanction" ? "स्वीकृति" : form.eotType === "rejection" ? "अस्वीकृति" : "आवेदन"}</p>
+            <p className="text-xs mb-1">संदर्भ: अनुबंध संख्या {form.agreementNumber}</p>
+            <p className="text-xs mb-2">महोदय,</p>
+            <p className="text-xs text-justify mb-1">मूल पूर्णता तिथि: {form.originalCompletionDate}</p>
+            <p className="text-xs text-justify mb-1">विलम्ब कारण: {form.reasonForDelay}</p>
+            {form.eotType === "sanction" && <p className="text-xs text-justify mb-1">{form.extensionDays} दिन EOT स्वीकृत। संशोधित पूर्णता: {form.extendedCompletionDate}।</p>}
+            {form.eotType === "rejection" && <p className="text-xs text-justify mb-1">EOT आवेदन अस्वीकृत। L.D. वसूल की जाएगी।</p>}
+            <p className="text-xs mb-6 mt-4">भवदीय,</p>
+            <p className="text-xs font-bold">({form.fromName})</p>
+            <p className="text-xs">{form.fromDesignation}</p>
+            <p className="text-xs">{form.fromOffice}</p>
+          </div>
         </div>
       </div>
-    </div>
+    </ToolShell>
   );
 }

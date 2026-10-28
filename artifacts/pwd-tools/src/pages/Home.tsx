@@ -1,3 +1,4 @@
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { useLocation } from "wouter";
 
 const TOOLS = [
@@ -217,6 +218,7 @@ function Diyas() {
 }
 
 export default function Home() {
+  useDocumentTitle("PWD Tools Suite");
   const [, navigate] = useLocation();
 
   return (

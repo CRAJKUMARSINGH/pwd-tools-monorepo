@@ -3,6 +3,8 @@
  * Self-contained inside pwd-tools; uses legalApi for data.
  * Requires VITE_API_URL to be set (shows error banner if not configured).
  */
+import ToolShell from "@/components/ToolShell";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
     ArrowLeft,
@@ -464,29 +466,32 @@ function StylesManager({ onNavigate }: { onNavigate: (v: LegalView) => void }) {
 // ── Root entry point ──────────────────────────────────────────────────────
 
 export default function LegalCorrespondencePage() {
+    useDocumentTitle("Legal Correspondence");
     const [view, setView] = useState<LegalView>({ name: "dashboard" });
 
     if (!LEGAL_API_ENABLED) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="text-center max-w-md">
-                    <WifiOff size={40} className="mx-auto text-gray-300 mb-4" />
-                    <h2 className="text-lg font-bold text-gray-700 mb-2">API Not Configured</h2>
-                    <p className="text-sm text-gray-500">
-                        Set the <code className="bg-gray-100 px-1 rounded">VITE_API_URL</code> environment
-                        variable to the running <code className="bg-gray-100 px-1 rounded">api-server</code> origin,
-                        then reload the page.
-                    </p>
+            <ToolShell title="Legal Correspondence">
+                <div className="min-h-[100dvh] bg-gray-50 flex items-center justify-center">
+                    <div className="text-center max-w-md">
+                        <WifiOff size={40} className="mx-auto text-gray-300 mb-4" />
+                        <h2 className="text-lg font-bold text-gray-700 mb-2">API Not Configured</h2>
+                        <p className="text-sm text-gray-500">
+                            Set the <code className="bg-gray-100 px-1 rounded">VITE_API_URL</code> environment
+                            variable to the running <code className="bg-gray-100 px-1 rounded">api-server</code> origin,
+                            then reload the page.
+                        </p>
+                    </div>
                 </div>
-            </div>
+            </ToolShell>
         );
     }
 
-    if (view.name === "dashboard") return <Dashboard onNavigate={setView} />;
-    if (view.name === "list") return <LetterList onNavigate={setView} />;
-    if (view.name === "new") return <LetterFormView onNavigate={setView} />;
-    if (view.name === "edit") return <LetterFormView id={view.id} onNavigate={setView} />;
-    if (view.name === "print") return <PrintView id={view.id} onNavigate={setView} />;
-    if (view.name === "styles") return <StylesManager onNavigate={setView} />;
+    if (view.name === "dashboard") return <ToolShell title="Legal Correspondence"><Dashboard onNavigate={setView} /></ToolShell>;
+    if (view.name === "list") return <ToolShell title="Legal Correspondence"><LetterList onNavigate={setView} /></ToolShell>;
+    if (view.name === "new") return <ToolShell title="Legal Correspondence"><LetterFormView onNavigate={setView} /></ToolShell>;
+    if (view.name === "edit") return <ToolShell title="Legal Correspondence"><LetterFormView id={view.id} onNavigate={setView} /></ToolShell>;
+    if (view.name === "print") return <ToolShell title="Legal Correspondence"><PrintView id={view.id} onNavigate={setView} /></ToolShell>;
+    if (view.name === "styles") return <ToolShell title="Legal Correspondence"><StylesManager onNavigate={setView} /></ToolShell>;
     return null;
 }

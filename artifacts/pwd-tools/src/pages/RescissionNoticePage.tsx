@@ -2,6 +2,9 @@
  * Rescission / Risk-Cost Notice Generator
  * Generates Hindi A4 rescission order and risk-cost notice with DOCX download.
  */
+import ToolShell from "@/components/ToolShell";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
+import { usePrintPage } from "@/lib/printPage";
 import { AlignmentType, BorderStyle, Document, Packer, PageOrientation, Paragraph, TextRun } from "docx";
 import { saveAs } from "file-saver";
 import { ArrowLeft, Download, Gavel } from "lucide-react";
@@ -25,6 +28,8 @@ function today() {
 }
 
 export default function RescissionNoticePage() {
+  useDocumentTitle("Rescission Notice");
+  usePrintPage();
   const [, go] = useLocation();
   const [form, setForm] = useState({
     letterNumber: "",
@@ -106,72 +111,74 @@ export default function RescissionNoticePage() {
   }
 
   return (
-    <div className="min-h-screen bg-red-50">
-      <div className="bg-red-800 text-white px-6 py-3 flex items-center gap-3 shadow">
-        <button onClick={() => go("/")} className="p-1.5 rounded hover:bg-red-700"><ArrowLeft size={16} /></button>
-        <Gavel size={18} />
-        <div className="flex-1">
-          <h1 className="font-bold text-sm">Rescission / Risk-Cost Order Generator</h1>
-          <p className="text-red-200 text-xs">कार्यानुबंध रिसाइड आदेश एवं रिस्क-कोस्ट नोटिस — A4 DOCX</p>
-        </div>
-        <button onClick={downloadDocx} className="flex items-center gap-1.5 px-3 py-1.5 bg-white text-red-800 rounded text-xs font-bold">
-          <Download size={13} /> DOCX
-        </button>
-      </div>
-
-      <div className="max-w-6xl mx-auto p-4 flex gap-4">
-        <div className="w-[400px] shrink-0 flex flex-col gap-3">
-          <div className="grid grid-cols-2 gap-2">
-            <div><label className={LBL}>क्रमांक</label><input className={INP} value={form.letterNumber} onChange={set("letterNumber")} /></div>
-            <div><label className={LBL}>दिनांक</label><input className={INP} value={form.date} onChange={set("date")} /></div>
+    <ToolShell title="Rescission Notice">
+      <div className="min-h-[100dvh] bg-red-50">
+        <div className="bg-red-800 text-white px-6 py-3 flex items-center gap-3 shadow">
+          <button onClick={() => go("/")} className="p-1.5 rounded hover:bg-red-700"><ArrowLeft size={16} /></button>
+          <Gavel size={18} />
+          <div className="flex-1">
+            <h1 className="font-bold text-sm">Rescission / Risk-Cost Order Generator</h1>
+            <p className="text-red-200 text-xs">कार्यानुबंध रिसाइड आदेश एवं रिस्क-कोस्ट नोटिस — A4 DOCX</p>
           </div>
-          <div><label className={LBL}>ठेकेदार का नाम</label><input className={INP} value={form.contractorName} onChange={set("contractorName")} /></div>
-          <div><label className={LBL}>श्रेणी/पदनाम</label><input className={INP} value={form.contractorDesignation} onChange={set("contractorDesignation")} /></div>
-          <div><label className={LBL}>पता</label><textarea className={TA} rows={2} value={form.contractorAddress} onChange={set("contractorAddress")} /></div>
-          <div><label className={LBL}>कार्य का नाम</label><textarea className={TA} rows={2} value={form.nameOfWork} onChange={set("nameOfWork")} /></div>
-          <div className="grid grid-cols-2 gap-2">
-            <div><label className={LBL}>Package No.</label><input className={INP} value={form.packageNumber} onChange={set("packageNumber")} /></div>
-            <div><label className={LBL}>अनुबंध संख्या</label><input className={INP} value={form.agreementNumber} onChange={set("agreementNumber")} /></div>
-          </div>
-          <div><label className={LBL}>योजना</label><input className={INP} value={form.schemeName} onChange={set("schemeName")} /></div>
-          <div><label className={LBL}>अनुबंध राशि (रु.)</label><input className={INP} value={form.contractAmount} onChange={set("contractAmount")} /></div>
-          <div className="grid grid-cols-2 gap-2">
-            <div><label className={LBL}>प्रारम्भ तिथि</label><input className={INP} value={form.startDate} onChange={set("startDate")} /></div>
-            <div><label className={LBL}>निर्धारित पूर्णता</label><input className={INP} value={form.completionDate} onChange={set("completionDate")} /></div>
-          </div>
-          <div><label className={LBL}>रिसाइड के कारण</label><textarea className={TA} rows={4} value={form.reasonsForRescission} onChange={set("reasonsForRescission")} /></div>
-          <div><label className={LBL}>रिसाइड धारा</label><input className={INP} value={form.rescissionClause} onChange={set("rescissionClause")} /></div>
-          <div className="grid grid-cols-2 gap-2">
-            <div><label className={LBL}>रिस्क-कोस्ट राशि (रु.)</label><input className={INP} value={form.riskCostAmount} onChange={set("riskCostAmount")} /></div>
-            <div><label className={LBL}>प्रतिशत (%)</label><input className={INP} value={form.riskCostPercent} onChange={set("riskCostPercent")} /></div>
-          </div>
-          <div><label className={LBL}>नई निविदा सन्दर्भ (वैकल्पिक)</label><input className={INP} value={form.newTenderReference} onChange={set("newTenderReference")} /></div>
-          <div><label className={LBL}>प्रतिलिपि (एक प्रति प्रत्येक पंक्ति में)</label><textarea className={TA} rows={3} value={form.ccLines} onChange={set("ccLines")} /></div>
-          <button onClick={downloadDocx} className="w-full py-3 bg-red-800 text-white rounded-lg font-bold text-sm hover:bg-red-900 flex items-center justify-center gap-2">
-            <Download size={16} /> Download Word (.docx)
+          <button onClick={downloadDocx} className="flex items-center gap-1.5 px-3 py-1.5 bg-white text-red-800 rounded text-xs font-bold">
+            <Download size={13} /> DOCX
           </button>
         </div>
 
-        <div className="flex-1 bg-white border border-gray-200 rounded shadow p-8 text-sm font-serif" style={{ minHeight: "297mm", maxWidth: "210mm" }}>
-          <div className="text-center font-bold text-base mb-1">राजस्थान सरकार</div>
-          <div className="text-center font-bold">{form.fromDesignation}, सार्वजनिक निर्माण विभाग</div>
-          <div className="text-center font-bold text-sm mb-2">{form.fromOffice}</div>
-          <hr className="border-black mb-2" />
-          <div className="flex justify-between text-xs mb-2"><span>क्रमांकः {form.letterNumber}</span><span>दिनांकः {form.date}</span></div>
-          <div className="text-center font-bold text-sm mb-2">कार्यालय आदेश / OFFICE ORDER</div>
-          <p className="text-xs font-bold mb-2">{form.nameOfWork}{form.packageNumber ? " — " + form.packageNumber : ""}, अनुबंध: {form.agreementNumber}</p>
-          <p className="text-xs text-justify mb-2">मेसर्स {form.contractorName} ({form.contractorDesignation}) — राशि रु. {form.contractAmount}/-, प्रारम्भ: {form.startDate}, पूर्णता: {form.completionDate}।</p>
-          <p className="text-xs text-justify mb-2">{form.reasonsForRescission}</p>
-          <p className="text-xs text-justify mb-2">अतः कार्यानुबंध {form.rescissionClause} के अन्तर्गत रिसाइड किया जाता है।</p>
-          <p className="text-xs text-justify mb-4">रिस्क-कोस्ट राशि रु. {form.riskCostAmount}/- ({form.riskCostPercent}%) वसूल की जाएगी।</p>
-          <p className="text-xs mb-4">भवदीय,</p>
-          <p className="text-xs font-bold">({form.fromName})</p>
-          <p className="text-xs mb-4">{form.fromDesignation}<br />{form.fromOffice}</p>
-          <hr className="border-black mt-4 mb-1" />
-          <p className="text-xs font-bold mb-1">प्रतिलिपि:</p>
-          {form.ccLines.split("\n").map((l, i) => <p key={i} className="text-xs">{i + 1}. {l}</p>)}
+        <div className="max-w-6xl mx-auto p-4 flex gap-4">
+          <div className="w-[400px] shrink-0 flex flex-col gap-3">
+            <div className="grid grid-cols-2 gap-2">
+              <div><label className={LBL}>क्रमांक</label><input className={INP} value={form.letterNumber} onChange={set("letterNumber")} /></div>
+              <div><label className={LBL}>दिनांक</label><input className={INP} value={form.date} onChange={set("date")} /></div>
+            </div>
+            <div><label className={LBL}>ठेकेदार का नाम</label><input className={INP} value={form.contractorName} onChange={set("contractorName")} /></div>
+            <div><label className={LBL}>श्रेणी/पदनाम</label><input className={INP} value={form.contractorDesignation} onChange={set("contractorDesignation")} /></div>
+            <div><label className={LBL}>पता</label><textarea className={TA} rows={2} value={form.contractorAddress} onChange={set("contractorAddress")} /></div>
+            <div><label className={LBL}>कार्य का नाम</label><textarea className={TA} rows={2} value={form.nameOfWork} onChange={set("nameOfWork")} /></div>
+            <div className="grid grid-cols-2 gap-2">
+              <div><label className={LBL}>Package No.</label><input className={INP} value={form.packageNumber} onChange={set("packageNumber")} /></div>
+              <div><label className={LBL}>अनुबंध संख्या</label><input className={INP} value={form.agreementNumber} onChange={set("agreementNumber")} /></div>
+            </div>
+            <div><label className={LBL}>योजना</label><input className={INP} value={form.schemeName} onChange={set("schemeName")} /></div>
+            <div><label className={LBL}>अनुबंध राशि (रु.)</label><input className={INP} value={form.contractAmount} onChange={set("contractAmount")} /></div>
+            <div className="grid grid-cols-2 gap-2">
+              <div><label className={LBL}>प्रारम्भ तिथि</label><input className={INP} value={form.startDate} onChange={set("startDate")} /></div>
+              <div><label className={LBL}>निर्धारित पूर्णता</label><input className={INP} value={form.completionDate} onChange={set("completionDate")} /></div>
+            </div>
+            <div><label className={LBL}>रिसाइड के कारण</label><textarea className={TA} rows={4} value={form.reasonsForRescission} onChange={set("reasonsForRescission")} /></div>
+            <div><label className={LBL}>रिसाइड धारा</label><input className={INP} value={form.rescissionClause} onChange={set("rescissionClause")} /></div>
+            <div className="grid grid-cols-2 gap-2">
+              <div><label className={LBL}>रिस्क-कोस्ट राशि (रु.)</label><input className={INP} value={form.riskCostAmount} onChange={set("riskCostAmount")} /></div>
+              <div><label className={LBL}>प्रतिशत (%)</label><input className={INP} value={form.riskCostPercent} onChange={set("riskCostPercent")} /></div>
+            </div>
+            <div><label className={LBL}>नई निविदा सन्दर्भ (वैकल्पिक)</label><input className={INP} value={form.newTenderReference} onChange={set("newTenderReference")} /></div>
+            <div><label className={LBL}>प्रतिलिपि (एक प्रति प्रत्येक पंक्ति में)</label><textarea className={TA} rows={3} value={form.ccLines} onChange={set("ccLines")} /></div>
+            <button onClick={downloadDocx} className="w-full py-3 bg-red-800 text-white rounded-lg font-bold text-sm hover:bg-red-900 flex items-center justify-center gap-2">
+              <Download size={16} /> Download Word (.docx)
+            </button>
+          </div>
+
+          <div className="flex-1 bg-white border border-gray-200 rounded shadow p-8 text-sm font-serif" style={{ minHeight: "297mm", maxWidth: "210mm" }}>
+            <div className="text-center font-bold text-base mb-1">राजस्थान सरकार</div>
+            <div className="text-center font-bold">{form.fromDesignation}, सार्वजनिक निर्माण विभाग</div>
+            <div className="text-center font-bold text-sm mb-2">{form.fromOffice}</div>
+            <hr className="border-black mb-2" />
+            <div className="flex justify-between text-xs mb-2"><span>क्रमांकः {form.letterNumber}</span><span>दिनांकः {form.date}</span></div>
+            <div className="text-center font-bold text-sm mb-2">कार्यालय आदेश / OFFICE ORDER</div>
+            <p className="text-xs font-bold mb-2">{form.nameOfWork}{form.packageNumber ? " — " + form.packageNumber : ""}, अनुबंध: {form.agreementNumber}</p>
+            <p className="text-xs text-justify mb-2">मेसर्स {form.contractorName} ({form.contractorDesignation}) — राशि रु. {form.contractAmount}/-, प्रारम्भ: {form.startDate}, पूर्णता: {form.completionDate}।</p>
+            <p className="text-xs text-justify mb-2">{form.reasonsForRescission}</p>
+            <p className="text-xs text-justify mb-2">अतः कार्यानुबंध {form.rescissionClause} के अन्तर्गत रिसाइड किया जाता है।</p>
+            <p className="text-xs text-justify mb-4">रिस्क-कोस्ट राशि रु. {form.riskCostAmount}/- ({form.riskCostPercent}%) वसूल की जाएगी।</p>
+            <p className="text-xs mb-4">भवदीय,</p>
+            <p className="text-xs font-bold">({form.fromName})</p>
+            <p className="text-xs mb-4">{form.fromDesignation}<br />{form.fromOffice}</p>
+            <hr className="border-black mt-4 mb-1" />
+            <p className="text-xs font-bold mb-1">प्रतिलिपि:</p>
+            {form.ccLines.split("\n").map((l, i) => <p key={i} className="text-xs">{i + 1}. {l}</p>)}
+          </div>
         </div>
       </div>
-    </div>
+    </ToolShell>
   );
 }

@@ -1,11 +1,12 @@
+import ToolShell from "@/components/ToolShell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { Download } from "lucide-react";
 import { useState } from "react";
-
 interface EmdReceipt {
   payee: string;
   amount: number;
@@ -101,6 +102,7 @@ function convertNumberToWords(num: number): string {
 }
 
 export default function ExcelToEmd() {
+  useDocumentTitle("Excel to EMD");
   const [receipts, setReceipts] = useState<EmdReceipt[]>([]);
   const [currentReceipt, setCurrentReceipt] = useState<EmdReceipt>({
     payee: "",
@@ -275,8 +277,9 @@ export default function ExcelToEmd() {
   };
 
   return (
-    <>
-      <style>{`
+    <ToolShell title="Excel to EMD">
+      <>
+        <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;600;700&display=swap');
         @keyframes floatBalloon {
           0%,100% { transform: translateY(0) rotate(-2deg); }
@@ -288,218 +291,219 @@ export default function ExcelToEmd() {
         }
       `}</style>
 
-      <div style={{ minHeight: "100vh", background: "linear-gradient(160deg, #fff8e1 0%, #fff3e0 40%, #fce4ec 100%)", fontFamily: "'Noto Sans Devanagari','Segoe UI',sans-serif" }}>
+        <div style={{ minHeight: "100vh", background: "linear-gradient(160deg, #fff8e1 0%, #fff3e0 40%, #fce4ec 100%)", fontFamily: "'Noto Sans Devanagari','Segoe UI',sans-serif" }}>
 
-        {/* Navratri Header */}
-        <div style={{ position: "relative", overflow: "hidden", background: "linear-gradient(135deg, #7B0D00 0%, #c0392b 25%, #e67e22 50%, #c0392b 75%, #7B0D00 100%)", backgroundSize: "300% auto", animation: "shimmer 8s linear infinite", borderBottom: "4px solid #FFD700" }}>
-          <Diyas />
-          <div style={{ position: "relative", zIndex: 1, textAlign: "center", padding: "28px 24px 18px" }}>
-            <div style={{ fontSize: "48px", marginBottom: "6px", filter: "drop-shadow(0 0 12px #FFD700)" }}>📊</div>
-            <div style={{ color: "#FFD700", fontWeight: 900, fontSize: "1.8rem", letterSpacing: "0.06em", textShadow: "0 0 16px rgba(255,215,0,0.8), 0 2px 8px rgba(0,0,0,0.5)" }}>
-              🪔 Excel to EMD Tool 🪔
-            </div>
-            <div style={{ color: "#FFEAA7", fontWeight: 500, fontSize: "0.95rem", letterSpacing: "0.08em", marginTop: "6px" }}>
-              Hand Receipt Generator (RPWA 28)
-            </div>
-            <div style={{ color: "#FFD700", fontWeight: 500, fontSize: "0.8rem", letterSpacing: "0.12em", marginTop: "4px", opacity: 0.85 }}>
-              ✦ Batch EMD Processing &nbsp;✦&nbsp; नवरात्रि की शुभकामनाएं 🌸
-            </div>
-          </div>
-          <div style={{ background: "linear-gradient(90deg, #FFD700, #FF8C00, #FFD700)", height: "3px" }} />
-        </div>
-
-        {/* Main Content */}
-        <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "32px 24px" }}>
-          {/* Sample File Download Section */}
-          <Card style={{ background: "linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%)", border: "2px solid #4caf50", marginBottom: "24px" }}>
-            <CardContent style={{ padding: "16px 24px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <div>
-                <div style={{ fontWeight: 700, color: "#2e7d32", fontSize: "1rem", marginBottom: "4px" }}>
-                  📥 Sample Input File
-                </div>
-                <div style={{ color: "#388e3c", fontSize: "0.875rem" }}>
-                  Download sample Excel file for reference
-                </div>
+          {/* Navratri Header */}
+          <div style={{ position: "relative", overflow: "hidden", background: "linear-gradient(135deg, #7B0D00 0%, #c0392b 25%, #e67e22 50%, #c0392b 75%, #7B0D00 100%)", backgroundSize: "300% auto", animation: "shimmer 8s linear infinite", borderBottom: "4px solid #FFD700" }}>
+            <Diyas />
+            <div style={{ position: "relative", zIndex: 1, textAlign: "center", padding: "28px 24px 18px" }}>
+              <div style={{ fontSize: "48px", marginBottom: "6px", filter: "drop-shadow(0 0 12px #FFD700)" }}>📊</div>
+              <div style={{ color: "#FFD700", fontWeight: 900, fontSize: "1.8rem", letterSpacing: "0.06em", textShadow: "0 0 16px rgba(255,215,0,0.8), 0 2px 8px rgba(0,0,0,0.5)" }}>
+                🪔 Excel to EMD Tool 🪔
               </div>
-              <Button
-                onClick={() => {
-                  const link = document.createElement('a');
-                  link.href = '/sample-files/sample-emd-input.xlsx';
-                  link.download = 'sample-emd-input.xlsx';
-                  link.click();
-                }}
-                style={{
-                  background: "linear-gradient(135deg, #4caf50, #2e7d32)",
-                  color: "#fff",
-                  fontWeight: 600
-                }}
-              >
-                <Download style={{ marginRight: "8px", width: "16px", height: "16px" }} />
-                Download Sample
-              </Button>
-            </CardContent>
-          </Card>
+              <div style={{ color: "#FFEAA7", fontWeight: 500, fontSize: "0.95rem", letterSpacing: "0.08em", marginTop: "6px" }}>
+                Hand Receipt Generator (RPWA 28)
+              </div>
+              <div style={{ color: "#FFD700", fontWeight: 500, fontSize: "0.8rem", letterSpacing: "0.12em", marginTop: "4px", opacity: 0.85 }}>
+                ✦ Batch EMD Processing &nbsp;✦&nbsp; नवरात्रि की शुभकामनाएं 🌸
+              </div>
+            </div>
+            <div style={{ background: "linear-gradient(90deg, #FFD700, #FF8C00, #FFD700)", height: "3px" }} />
+          </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
-
-            {/* Input Form */}
-            <Card style={{ background: "linear-gradient(135deg, #fffbf0 0%, #fff8e1 100%)", border: "2px solid #e6a817" }}>
-              <CardHeader>
-                <CardTitle style={{ color: "#7B0D00" }}>Add EMD Receipt</CardTitle>
-                <CardDescription style={{ color: "#6b3a00" }}>Enter details to generate hand receipt. Use sample file as reference for format.</CardDescription>
-              </CardHeader>
-              <CardContent style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          {/* Main Content */}
+          <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "32px 24px" }}>
+            {/* Sample File Download Section */}
+            <Card style={{ background: "linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%)", border: "2px solid #4caf50", marginBottom: "24px" }}>
+              <CardContent style={{ padding: "16px 24px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <div>
-                  <Label style={{ color: "#7B0D00", fontWeight: 600 }}>Payee Name *</Label>
-                  <Input
-                    value={currentReceipt.payee}
-                    onChange={(e) => setCurrentReceipt({ ...currentReceipt, payee: e.target.value })}
-                    placeholder="Enter payee name"
-                    style={{ marginTop: "8px" }}
-                  />
-                </div>
-
-                <div>
-                  <Label style={{ color: "#7B0D00", fontWeight: 600 }}>Amount (₹) *</Label>
-                  <Input
-                    type="number"
-                    value={currentReceipt.amount || ""}
-                    onChange={(e) => setCurrentReceipt({ ...currentReceipt, amount: parseFloat(e.target.value) || 0 })}
-                    placeholder="Enter amount"
-                    style={{ marginTop: "8px" }}
-                  />
-                </div>
-
-                <div>
-                  <Label style={{ color: "#7B0D00", fontWeight: 600 }}>Work Description *</Label>
-                  <Textarea
-                    value={currentReceipt.work}
-                    onChange={(e) => setCurrentReceipt({ ...currentReceipt, work: e.target.value })}
-                    placeholder="Enter work description"
-                    style={{ marginTop: "8px", minHeight: "80px" }}
-                  />
-                </div>
-
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-                  <div>
-                    <Label style={{ color: "#7B0D00", fontWeight: 600 }}>Voucher No.</Label>
-                    <Input
-                      value={currentReceipt.voucher_no}
-                      onChange={(e) => setCurrentReceipt({ ...currentReceipt, voucher_no: e.target.value })}
-                      placeholder="Optional"
-                      style={{ marginTop: "8px" }}
-                    />
+                  <div style={{ fontWeight: 700, color: "#2e7d32", fontSize: "1rem", marginBottom: "4px" }}>
+                    📥 Sample Input File
                   </div>
-                  <div>
-                    <Label style={{ color: "#7B0D00", fontWeight: 600 }}>Cheque No.</Label>
-                    <Input
-                      value={currentReceipt.cheque_no}
-                      onChange={(e) => setCurrentReceipt({ ...currentReceipt, cheque_no: e.target.value })}
-                      placeholder="Optional"
-                      style={{ marginTop: "8px" }}
-                    />
+                  <div style={{ color: "#388e3c", fontSize: "0.875rem" }}>
+                    Download sample Excel file for reference
                   </div>
                 </div>
-
-                <div>
-                  <Label style={{ color: "#7B0D00", fontWeight: 600 }}>Date</Label>
-                  <Input
-                    type="date"
-                    value={currentReceipt.date}
-                    onChange={(e) => setCurrentReceipt({ ...currentReceipt, date: e.target.value })}
-                    style={{ marginTop: "8px" }}
-                  />
-                </div>
-
                 <Button
-                  onClick={handleAddReceipt}
+                  onClick={() => {
+                    const link = document.createElement('a');
+                    link.href = '/sample-files/sample-emd-input.xlsx';
+                    link.download = 'sample-emd-input.xlsx';
+                    link.click();
+                  }}
                   style={{
-                    background: "linear-gradient(135deg, #7B0D00, #c0392b)",
-                    color: "#FFD700",
-                    fontWeight: 700
+                    background: "linear-gradient(135deg, #4caf50, #2e7d32)",
+                    color: "#fff",
+                    fontWeight: 600
                   }}
                 >
-                  🪔 Add Receipt
+                  <Download style={{ marginRight: "8px", width: "16px", height: "16px" }} />
+                  Download Sample
                 </Button>
               </CardContent>
             </Card>
 
-            {/* Receipts List */}
-            <Card style={{ background: "linear-gradient(135deg, #fffbf0 0%, #fff8e1 100%)", border: "2px solid #e6a817" }}>
-              <CardHeader>
-                <CardTitle style={{ color: "#7B0D00" }}>Generated Receipts ({receipts.length})</CardTitle>
-                <CardDescription style={{ color: "#6b3a00" }}>Click print to generate hand receipt</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {receipts.length === 0 ? (
-                  <div style={{ textAlign: "center", padding: "40px", color: "#6b3a00" }}>
-                    <div style={{ fontSize: "48px", marginBottom: "16px" }}>📋</div>
-                    <p>No receipts added yet</p>
-                    <p style={{ fontSize: "0.875rem", marginTop: "8px" }}>Add receipt details using the form</p>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
+
+              {/* Input Form */}
+              <Card style={{ background: "linear-gradient(135deg, #fffbf0 0%, #fff8e1 100%)", border: "2px solid #e6a817" }}>
+                <CardHeader>
+                  <CardTitle style={{ color: "#7B0D00" }}>Add EMD Receipt</CardTitle>
+                  <CardDescription style={{ color: "#6b3a00" }}>Enter details to generate hand receipt. Use sample file as reference for format.</CardDescription>
+                </CardHeader>
+                <CardContent style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                  <div>
+                    <Label style={{ color: "#7B0D00", fontWeight: 600 }}>Payee Name *</Label>
+                    <Input
+                      value={currentReceipt.payee}
+                      onChange={(e) => setCurrentReceipt({ ...currentReceipt, payee: e.target.value })}
+                      placeholder="Enter payee name"
+                      style={{ marginTop: "8px" }}
+                    />
                   </div>
-                ) : (
-                  <div style={{ display: "flex", flexDirection: "column", gap: "12px", maxHeight: "500px", overflowY: "auto" }}>
-                    {receipts.map((receipt, index) => (
-                      <div
-                        key={index}
-                        style={{
-                          background: "#fff",
-                          border: "1px solid #e6a817",
-                          borderRadius: "8px",
-                          padding: "16px",
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: "8px"
-                        }}
-                      >
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                          <div>
-                            <div style={{ fontWeight: 700, color: "#7B0D00", fontSize: "0.95rem" }}>{receipt.payee}</div>
-                            <div style={{ color: "#6b3a00", fontSize: "0.875rem", marginTop: "4px" }}>₹{receipt.amount.toLocaleString("en-IN")}</div>
-                            <div style={{ color: "#6b3a00", fontSize: "0.8rem", marginTop: "4px", fontStyle: "italic" }}>{receipt.amount_words}</div>
+
+                  <div>
+                    <Label style={{ color: "#7B0D00", fontWeight: 600 }}>Amount (₹) *</Label>
+                    <Input
+                      type="number"
+                      value={currentReceipt.amount || ""}
+                      onChange={(e) => setCurrentReceipt({ ...currentReceipt, amount: parseFloat(e.target.value) || 0 })}
+                      placeholder="Enter amount"
+                      style={{ marginTop: "8px" }}
+                    />
+                  </div>
+
+                  <div>
+                    <Label style={{ color: "#7B0D00", fontWeight: 600 }}>Work Description *</Label>
+                    <Textarea
+                      value={currentReceipt.work}
+                      onChange={(e) => setCurrentReceipt({ ...currentReceipt, work: e.target.value })}
+                      placeholder="Enter work description"
+                      style={{ marginTop: "8px", minHeight: "80px" }}
+                    />
+                  </div>
+
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                    <div>
+                      <Label style={{ color: "#7B0D00", fontWeight: 600 }}>Voucher No.</Label>
+                      <Input
+                        value={currentReceipt.voucher_no}
+                        onChange={(e) => setCurrentReceipt({ ...currentReceipt, voucher_no: e.target.value })}
+                        placeholder="Optional"
+                        style={{ marginTop: "8px" }}
+                      />
+                    </div>
+                    <div>
+                      <Label style={{ color: "#7B0D00", fontWeight: 600 }}>Cheque No.</Label>
+                      <Input
+                        value={currentReceipt.cheque_no}
+                        onChange={(e) => setCurrentReceipt({ ...currentReceipt, cheque_no: e.target.value })}
+                        placeholder="Optional"
+                        style={{ marginTop: "8px" }}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label style={{ color: "#7B0D00", fontWeight: 600 }}>Date</Label>
+                    <Input
+                      type="date"
+                      value={currentReceipt.date}
+                      onChange={(e) => setCurrentReceipt({ ...currentReceipt, date: e.target.value })}
+                      style={{ marginTop: "8px" }}
+                    />
+                  </div>
+
+                  <Button
+                    onClick={handleAddReceipt}
+                    style={{
+                      background: "linear-gradient(135deg, #7B0D00, #c0392b)",
+                      color: "#FFD700",
+                      fontWeight: 700
+                    }}
+                  >
+                    🪔 Add Receipt
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Receipts List */}
+              <Card style={{ background: "linear-gradient(135deg, #fffbf0 0%, #fff8e1 100%)", border: "2px solid #e6a817" }}>
+                <CardHeader>
+                  <CardTitle style={{ color: "#7B0D00" }}>Generated Receipts ({receipts.length})</CardTitle>
+                  <CardDescription style={{ color: "#6b3a00" }}>Click print to generate hand receipt</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {receipts.length === 0 ? (
+                    <div style={{ textAlign: "center", padding: "40px", color: "#6b3a00" }}>
+                      <div style={{ fontSize: "48px", marginBottom: "16px" }}>📋</div>
+                      <p>No receipts added yet</p>
+                      <p style={{ fontSize: "0.875rem", marginTop: "8px" }}>Add receipt details using the form</p>
+                    </div>
+                  ) : (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "12px", maxHeight: "500px", overflowY: "auto" }}>
+                      {receipts.map((receipt, index) => (
+                        <div
+                          key={index}
+                          style={{
+                            background: "#fff",
+                            border: "1px solid #e6a817",
+                            borderRadius: "8px",
+                            padding: "16px",
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "8px"
+                          }}
+                        >
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                            <div>
+                              <div style={{ fontWeight: 700, color: "#7B0D00", fontSize: "0.95rem" }}>{receipt.payee}</div>
+                              <div style={{ color: "#6b3a00", fontSize: "0.875rem", marginTop: "4px" }}>₹{receipt.amount.toLocaleString("en-IN")}</div>
+                              <div style={{ color: "#6b3a00", fontSize: "0.8rem", marginTop: "4px", fontStyle: "italic" }}>{receipt.amount_words}</div>
+                            </div>
+                            <Button
+                              onClick={() => handleDeleteReceipt(index)}
+                              variant="destructive"
+                              size="sm"
+                              style={{ fontSize: "0.75rem" }}
+                            >
+                              Delete
+                            </Button>
                           </div>
-                          <Button
-                            onClick={() => handleDeleteReceipt(index)}
-                            variant="destructive"
-                            size="sm"
-                            style={{ fontSize: "0.75rem" }}
-                          >
-                            Delete
-                          </Button>
+                          <div style={{ fontSize: "0.8rem", color: "#6b3a00", marginTop: "8px" }}>
+                            <strong>Work:</strong> {receipt.work}
+                          </div>
+                          <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
+                            <Button
+                              onClick={() => handlePrintReceipt(receipt)}
+                              size="sm"
+                              style={{
+                                background: "linear-gradient(135deg, #7B0D00, #c0392b)",
+                                color: "#FFD700",
+                                fontWeight: 600,
+                                fontSize: "0.8rem"
+                              }}
+                            >
+                              🖨️ Print Receipt
+                            </Button>
+                          </div>
                         </div>
-                        <div style={{ fontSize: "0.8rem", color: "#6b3a00", marginTop: "8px" }}>
-                          <strong>Work:</strong> {receipt.work}
-                        </div>
-                        <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
-                          <Button
-                            onClick={() => handlePrintReceipt(receipt)}
-                            size="sm"
-                            style={{
-                              background: "linear-gradient(135deg, #7B0D00, #c0392b)",
-                              color: "#FFD700",
-                              fontWeight: 600,
-                              fontSize: "0.8rem"
-                            }}
-                          >
-                            🖨️ Print Receipt
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div style={{ textAlign: "center", padding: "24px", color: "#7B2D00", fontSize: "0.85rem", borderTop: "2px solid #e6a817", background: "linear-gradient(90deg, #fffbf0, #fff8e1, #fffbf0)" }}>
+            <div style={{ fontSize: "1.2rem", marginBottom: "4px" }}>🪔 ✦ 🌸 ✦ 🪔</div>
+            <div style={{ fontWeight: 700, color: "#7B0D00", marginBottom: "4px" }}>🏗️ PWD Tools Suite</div>
+            <div>Prepared on Initiative of Mrs. Premlata Jain, AAO | PWD Udaipur, Rajasthan</div>
           </div>
         </div>
-
-        {/* Footer */}
-        <div style={{ textAlign: "center", padding: "24px", color: "#7B2D00", fontSize: "0.85rem", borderTop: "2px solid #e6a817", background: "linear-gradient(90deg, #fffbf0, #fff8e1, #fffbf0)" }}>
-          <div style={{ fontSize: "1.2rem", marginBottom: "4px" }}>🪔 ✦ 🌸 ✦ 🪔</div>
-          <div style={{ fontWeight: 700, color: "#7B0D00", marginBottom: "4px" }}>🏗️ PWD Tools Suite</div>
-          <div>Prepared on Initiative of Mrs. Premlata Jain, AAO | PWD Udaipur, Rajasthan</div>
-        </div>
-      </div>
-    </>
+      </>
+    </ToolShell>
   );
 }

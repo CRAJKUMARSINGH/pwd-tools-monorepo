@@ -1,4 +1,5 @@
-﻿import BankCommunication from "@/pages/BankCommunication";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
+import BankCommunication from "@/pages/BankCommunication";
 import BillForm from "@/pages/BillForm";
 import ContractorRegistration from "@/pages/ContractorRegistration";
 import EnrollmentDataForm from "@/pages/EnrollmentDataForm";
@@ -43,6 +44,7 @@ function DiyasBar() {
 }
 
 export default function ToolViewer() {
+  useDocumentTitle("Tool Viewer");
   const { id } = useParams<{ id: string }>();
   const [, navigate] = useLocation();
 

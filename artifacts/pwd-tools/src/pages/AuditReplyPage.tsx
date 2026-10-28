@@ -5,10 +5,12 @@
  * Tab 2 — Fresh Para Entry : image upload, manual para fields, reply + comments, DOCX + Print
  */
 import { CASES } from "@/data/audit-cases";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { useFreshParas, type FreshPara } from "@/hooks/useFreshParas";
 import { useTransliterate } from "@/hooks/useTransliterate";
 import { generateDocx } from "@/lib/generate-docx";
 import { generateFreshDocx } from "@/lib/generate-fresh-docx";
+import { usePrintPage } from "@/lib/printPage";
 import { saveSnapshot, VAULT_TOOL } from "@/lib/vault";
 import {
   ArrowLeft,
@@ -274,7 +276,7 @@ function FreshParaCard({
 
       <div className="p-4 grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-4">
         {/* ── Left: image upload ──────────────────────────────────────── */}
-        <div className="flex flex-col gap-2">
+        <div className="fresh-image-col flex flex-col gap-2">
           <div
             className="relative flex items-center justify-center rounded-lg border-2 border-dashed border-amber-300 bg-amber-50 cursor-pointer overflow-hidden print:hidden"
             style={{ minHeight: 180 }}
@@ -494,8 +496,13 @@ export default function AuditReplyPage() {
   const [, navigate] = useLocation();
   const [tab, setTab] = useState<Tab>("existing");
 
+  useDocumentTitle("Audit Reply — जिला प्रभाग II उदयपुर");
+  // Audit tables are wide: restore the A4 landscape @page that the app-wide
+  // print fix removed (E-02). Scoped to this route only.
+  usePrintPage("landscape");
+
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col font-sans">
+    <div className="audit-print min-h-screen bg-background text-foreground flex flex-col font-sans">
       {/* ── Sticky header ────────────────────────────────────────────── */}
       <header className="bg-primary text-primary-foreground py-3 px-5 shadow-md sticky top-0 z-20 print:hidden">
         <div className="flex items-center gap-3">

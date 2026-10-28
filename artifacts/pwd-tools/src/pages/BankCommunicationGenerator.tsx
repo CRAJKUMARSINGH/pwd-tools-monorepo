@@ -941,7 +941,7 @@ export default function BankCommunicationGenerator() {
   const selectedTemplate = TEMPLATE_OPTIONS.find((t) => t.value === template)!;
 
   return (
-    <div className="flex h-screen w-full bg-background overflow-hidden">
+    <div className="flex min-h-[100dvh] w-full bg-background overflow-hidden">
       {/* ── LEFT PANEL: FORM ── */}
       <div className="w-[420px] flex flex-col border-r bg-card shadow-md hide-on-print z-10 flex-shrink-0">
         <div className="px-4 py-3 border-b bg-primary text-primary-foreground">

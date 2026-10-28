@@ -5,8 +5,7 @@
  * Per-entry: view data (JSON), restore to localStorage, delete.
  * Global: export-all JSON, import JSON, clear-all per tool.
  */
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import { useLocation } from "wouter";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import {
   clearToolSnapshots,
   deleteSnapshot,
@@ -27,20 +26,22 @@ import {
   Upload,
   X,
 } from "lucide-react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useLocation } from "wouter";
 
 // ── Tool display metadata ─────────────────────────────────────────────────
 
 const TOOL_META: Record<string, { name: string; icon: string; lsKey?: string }> = {
-  [VAULT_TOOL.AUDIT_REPLY]:    { name: "Audit Reply Tool",         icon: "🗂️", lsKey: "audit-reply-data" },
-  [VAULT_TOOL.AUDIT_FRESH]:    { name: "Fresh Audit Paras",        icon: "📋", lsKey: "audit-fresh-paras" },
-  [VAULT_TOOL.SPEED_MONEY]:    { name: "Speed Money Tool",         icon: "💰", lsKey: "speed-money-tool-recent-inputs" },
-  [VAULT_TOOL.BILL_NOTE]:      { name: "Bill Note Sheet",          icon: "🧾" },
+  [VAULT_TOOL.AUDIT_REPLY]: { name: "Audit Reply Tool", icon: "🗂️", lsKey: "audit-reply-data" },
+  [VAULT_TOOL.AUDIT_FRESH]: { name: "Fresh Audit Paras", icon: "📋", lsKey: "audit-fresh-paras" },
+  [VAULT_TOOL.SPEED_MONEY]: { name: "Speed Money Tool", icon: "💰", lsKey: "speed-money-tool-recent-inputs" },
+  [VAULT_TOOL.BILL_NOTE]: { name: "Bill Note Sheet", icon: "🧾" },
   [VAULT_TOOL.CORRESPONDENCE]: { name: "Correspondence Assistant", icon: "✉️", lsKey: "pwd_correspondence_letters" },
-  [VAULT_TOOL.EOT]:            { name: "EOT Letter",               icon: "📅" },
-  [VAULT_TOOL.NOTICE]:         { name: "Notice Generator",         icon: "🔔" },
-  [VAULT_TOOL.WORK_ORDER]:     { name: "Work Order Generator",     icon: "📋" },
-  [VAULT_TOOL.RESCISSION]:     { name: "Rescission Notice",        icon: "🔨" },
-  [VAULT_TOOL.BANK_COMM]:      { name: "Bank Communication",       icon: "🏦" },
+  [VAULT_TOOL.EOT]: { name: "EOT Letter", icon: "📅" },
+  [VAULT_TOOL.NOTICE]: { name: "Notice Generator", icon: "🔔" },
+  [VAULT_TOOL.WORK_ORDER]: { name: "Work Order Generator", icon: "📋" },
+  [VAULT_TOOL.RESCISSION]: { name: "Rescission Notice", icon: "🔨" },
+  [VAULT_TOOL.BANK_COMM]: { name: "Bank Communication", icon: "🏦" },
 };
 
 function toolName(tool: string): string {
@@ -232,6 +233,7 @@ function ToolGroup({
 // ── Main page ─────────────────────────────────────────────────────────────
 
 export default function DataVaultPage() {
+  useDocumentTitle("Data Vault");
   const [, navigate] = useLocation();
   const [snapshots, setSnapshots] = useState<VaultSnapshot[]>([]);
   const [viewing, setViewing] = useState<VaultSnapshot | null>(null);
