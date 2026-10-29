@@ -14,3 +14,12 @@
   from   = "/*"
   to     = "/index.html"
   status = 200
+
+# browser-image-compression runs with useWebWorker: true, so the worker does
+# importScripts() against cdn.jsdelivr.net. Drop jsdelivr from script-src or
+# worker-src and the import is blocked, compression silently falls back to the
+# main thread, and the UI freezes on large photos with no error shown.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Content-Security-Policy = "default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; worker-src 'self' blob: https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self'"

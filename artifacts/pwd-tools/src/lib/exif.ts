@@ -28,6 +28,15 @@ export type InjectResult = {
   error?: string;
 };
 
+/**
+ * One decision, made once. The caller must not re-derive "is this a JPEG?"
+ * — that is how the UI and the parser drift apart.
+ */
+export type ExifRead =
+  | { status: "ok"; exif: ExifIfds }
+  | { status: "not-jpeg"; mime: string }
+  | { status: "unreadable" };
+
 export const emptyExif = (): ExifIfds => ({
   "0th": {}, Exif: {}, GPS: {}, Interop: {}, "1st": {}, thumbnail: null,
 });
@@ -65,16 +74,20 @@ export async function looksLikeJpeg(file: File): Promise<boolean> {
   return head[0] === 0xff && head[1] === 0xd8;    // SOI
 }
 
-/** Parse EXIF from a JPEG. Returns null for PNG/HEIC/corrupt files. */
-export async function readExifFromFile(file: File): Promise<ExifIfds | null> {
-  if (!(await looksLikeJpeg(file))) return null;
+/**
+ * The single place that decides whether a file is readable EXIF. Returns the
+ * parsed bag, or the reason it could not be read — never both, and never a bare
+ * null the caller has to reinterpret.
+ */
+export async function readExifFromFile(file: File): Promise<ExifRead> {
+  if (!(await looksLikeJpeg(file))) return { status: "not-jpeg", mime: file.type };
   try {
     const buf = await file.arrayBuffer();
     const obj = piexifjs.load(arrayBufferToDataUrl(buf)) as unknown as ExifIfds | null;
     // piexifjs.load() yields null — not {} — for a JPEG with no EXIF segment.
-    return obj ? { ...emptyExif(), ...obj } : emptyExif();
+    return { status: "ok", exif: obj ? { ...emptyExif(), ...obj } : emptyExif() };
   } catch {
-    return null;
+    return { status: "unreadable" };
   }
 }
 
@@ -197,6 +210,22 @@ export function normaliseForReencodedJpeg(exif: ExifIfds): void {
   exif.thumbnail = null;
 }
 
+/**
+ * DateTimeOriginal is local wall-clock "YYYY:MM:DD HH:MM:SS" carrying no zone
+ * and no milliseconds. It is taken as written rather than converted: inventing
+ * an offset the file never recorded would be a worse lie than the mismatch.
+ */
+const parseDateTimeOriginal = (exif: ExifIfds | null): Date | null => {
+  const raw = exif?.Exif?.[piexifjs.ExifIFD.DateTimeOriginal];
+  if (typeof raw !== "string") return null;
+  const m = raw.match(/^(\d{4}):(\d{2}):(\d{2})[ T](\d{2}):(\d{2}):(\d{2})/);
+  if (!m) return null;
+  const Y = Number(m[1]), Mo = Number(m[2]), D = Number(m[3]);
+  const h = Number(m[4]), mi = Number(m[5]), s = Number(m[6]);
+  if (![Y, Mo, D, h, mi, s].every(Number.isFinite)) return null;
+  return new Date(Date.UTC(Y, Mo - 1, D, h, mi, s));
+};
+
 /** Build the EXIF to attach: start from the source, override GPS if supplied. */
 export function composeExif(
   source: ExifIfds | null,
@@ -209,7 +238,14 @@ export function composeExif(
   // original IFD verbatim preserves satellites / DOP / direction / speed, but a
   // rebuild is still required when the source carries no usable GPS at all.
   const sourceHasGps = !!readGps(source);
-  if (gps && (gps.source !== "exif" || !sourceHasGps)) base.GPS = buildGpsIfd(gps);
+  if (gps && (gps.source !== "exif" || !sourceHasGps)) {
+    // Reviewers cross-check the GPS stamp against DateTimeOriginal, so the
+    // capture time wins over the device clock. It only replaces a stamp that was
+    // already going to be written — it never introduces one on its own.
+    const captured = parseDateTimeOriginal(source);
+    const stamp = gps.timestampUtc ? captured ?? gps.timestampUtc : null;
+    base.GPS = buildGpsIfd({ ...gps, timestampUtc: stamp });
+  }
   normaliseForReencodedJpeg(base);
   return base;
 }

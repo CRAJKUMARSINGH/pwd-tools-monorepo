@@ -9,7 +9,6 @@ import {
   composeExif,
   gmapsUrl,
   injectExif,
-  looksLikeJpeg,
   readExifFromFile,
   readGps,
   type ExifIfds,
@@ -86,11 +85,14 @@ export default function ImageCompressor() {
     setGpsVerified(null);
     setGpsError("");
 
-    if (!(await looksLikeJpeg(file))) {
-      setGpsError(`${file.type || "Unknown type"} carries no EXIF — convert to JPEG first.`);
+    const read = await readExifFromFile(file);
+    if (read.status === "not-jpeg") {
+      setGpsError(`${read.mime || "This file"} carries no EXIF — convert to JPEG first.`);
+    } else if (read.status === "unreadable") {
+      setGpsError("Could not read this file's metadata.");
     }
 
-    const exif = await readExifFromFile(file);
+    const exif = read.status === "ok" ? read.exif : null;
     setExifData(exif);
 
     const found = readGps(exif);
@@ -105,7 +107,10 @@ export default function ImageCompressor() {
     } else if (preset) {
       setGps({ latitude: preset.lat, longitude: preset.lng, source: "preset" });
     } else {
-      setGps(null);
+      // The device tab advertises a default, so honour it rather than silently
+      // leaving the location null behind a popup the user may dismiss.
+      const fallback = PWD_LOCATIONS.find((l) => l.name === DEFAULT_LOCATION_NAME);
+      setGps(fallback ? { latitude: fallback.lat, longitude: fallback.lng, source: "preset" } : null);
       setShowGpsPopup(true);
     }
   };
@@ -154,7 +159,10 @@ export default function ImageCompressor() {
 
       setDownloadComplete(true);
     } catch (err) {
-      console.error("Compression error:", err);
+      // A silent console.error re-enabled the button with nothing on screen, so
+      // a failed compression looked like a misfired click.
+      setGpsError(err instanceof Error ? err.message : "Compression failed.");
+      setDownloadComplete(false);
     } finally {
       setProcessing(false);
     }
@@ -208,6 +216,9 @@ export default function ImageCompressor() {
   };
 
   const useManualLocation = () => {
+    // Number("") is 0, which passes both bounds checks — reject blanks first or
+    // an untouched form silently stamps Null Island (0.000000, 0.000000).
+    if (!manualLat.trim() || !manualLng.trim()) { setGpsError("Enter both latitude and longitude."); return; }
     const lat = Number(manualLat), lng = Number(manualLng);
     if (!Number.isFinite(lat) || lat < -90 || lat > 90) { setGpsError("Latitude must be −90…90"); return; }
     if (!Number.isFinite(lng) || lng < -180 || lng > 180) { setGpsError("Longitude must be −180…180"); return; }
@@ -383,7 +394,7 @@ export default function ImageCompressor() {
                   <input
                     ref={fileInputRef}
                     type="file"
-                    accept="image/jpeg,image/jpg"
+                    accept="image/jpeg,image/jpg,.jpg,.jpeg"
                     onChange={handleInputChange}
                     style={{ display: "none" }}
                   />

@@ -440,6 +440,33 @@ await testAsync("altitude + UTC stamp survive the round trip", async () => {
   eq(back.timestampUtc.toISOString(), t.toISOString(), "timestamp");
 });
 
+await testAsync("GPS stamp follows DateTimeOriginal when the file has one", async () => {
+  // A reviewer cross-checking GPSDateStamp against DateTimeOriginal must not see
+  // the device clock win.
+  const src = emptyExif();
+  src.Exif[piexifjs.ExifIFD.DateTimeOriginal] = "2026:10:28 11:22:33";
+  const deviceClock = new Date(Date.UTC(2026, 9, 28, 6, 5, 4));
+
+  const res = await injectExif(
+    jpegBlob(),
+    composeExif(src, { latitude: LAT, longitude: LNG, timestampUtc: deviceClock, source: "device" }),
+    true,
+  );
+  truthy(res.ok, `injectExif.ok (${res.error ?? ""})`);
+
+  const back = readGps(piexifjs.load(await blobToDataUrl(res.blob)));
+  eq(back.timestampUtc.toISOString(), "2026-10-28T11:22:33.000Z", "stamp follows DateTimeOriginal");
+});
+
+await testAsync("GPS stamp falls back to the device clock with no DateTimeOriginal", async () => {
+  const deviceClock = new Date(Date.UTC(2026, 9, 28, 6, 5, 4));
+  const out = composeExif(
+    emptyExif(),
+    { latitude: LAT, longitude: LNG, timestampUtc: deviceClock, source: "device" },
+  );
+  eq(out.GPS[piexifjs.GPSIFD.GPSDateStamp], "2026:10:28", "GPSDateStamp from the device clock");
+});
+
 // ── 6. Verification guard ────────────────────────────────────────────────────
 section("6. verify-after-write guard");
 
@@ -464,13 +491,23 @@ await testAsync("non-JPEG input fails cleanly and returns a blob", async () => {
 // ── 7. readExifFromFile ──────────────────────────────────────────────────────
 section("7. readExifFromFile");
 
-await testAsync("returns null for a non-JPEG mime type", async () => {
-  falsy(await readExifFromFile(jpegFile("image/png")), "PNG result");
+await testAsync("reports not-jpeg for a non-JPEG mime type", async () => {
+  const read = await readExifFromFile(jpegFile("image/png"));
+  eq(read.status, "not-jpeg", "status");
+  eq(read.mime, "image/png", "mime echoed back for the UI message");
+});
+
+await testAsync("sniffs the SOI marker when the picker reports an empty type", async () => {
+  // Android pickers hand over real JPEGs with file.type === "" — the gate must
+  // not reject them just because the picker forgot the MIME.
+  const read = await readExifFromFile(jpegFile(""));
+  eq(read.status, "ok", "status");
 });
 
 await testAsync("returns a well-formed IFD bag for a JPEG with no EXIF", async () => {
-  const exif = await readExifFromFile(jpegFile("image/jpeg"));
-  truthy(exif, "exif bag");
+  const read = await readExifFromFile(jpegFile("image/jpeg"));
+  eq(read.status, "ok", "status");
+  const exif = read.exif;
   for (const k of ["0th", "Exif", "GPS", "Interop", "1st"]) {
     truthy(exif[k] && typeof exif[k] === "object", `${k} ifd`);
   }
