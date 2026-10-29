@@ -92,4 +92,5 @@ for (const { route, comp } of routes) {
 }
 
 console.log(`\n${routes.length} routes checked — ${failed} gap${failed === 1 ? "" : "s"}`);
-process.exit(failed ? 1 : 0);
+// exitCode, not process.exit(): the latter races libuv teardown on Node 26/Windows
+process.exitCode = failed ? 1 : 0;

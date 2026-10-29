@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Logic smoke test for roman-to-hindi.ts
  * Simulates the transliterateWord / transliterateLastWord functions in pure JS
  * (without TypeScript compilation) by re-implementing the same DICT lookup.
@@ -160,4 +160,5 @@ check('handleAddRow wires defaultReply', pageSrc.includes('defaultReply'));
 check('Delete button only on extra rows (isExtra check)', pageSrc.includes('isExtra'));
 
 console.log(`\n══ SMOKE TEST RESULT: ${pass} passed, ${fail} failed ══`);
-if (fail > 0) process.exit(1);
+// exitCode, not process.exit(): the latter races libuv teardown on Node 26/Windows
+if (fail > 0) process.exitCode = 1;

@@ -80,4 +80,5 @@ check('All 3 template builders present',
 
 // ── Summary ───────────────────────────────────────────────────────────────────
 console.log(`\n══ SMOKE TEST 3 — BANK LETTER: ${pass} passed, ${fail} failed ══`);
-if (fail > 0) process.exit(1);
+// exitCode, not process.exit(): the latter races libuv teardown on Node 26/Windows
+if (fail > 0) process.exitCode = 1;

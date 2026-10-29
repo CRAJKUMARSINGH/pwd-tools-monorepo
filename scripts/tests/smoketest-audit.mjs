@@ -1,4 +1,4 @@
-﻿import { readFileSync } from 'fs';
+import { readFileSync } from 'fs';
 
 let pass = 0, fail = 0;
 function check(label, ok) {
@@ -93,4 +93,5 @@ check(`package.json devDep: @types/file-saver`, !!pkg.devDependencies?.['@types/
 
 // ── Summary ──────────────────────────────────────────────────────────────────
 console.log(`\n── RESULT: ${pass} passed, ${fail} failed ──`);
-if (fail > 0) process.exit(1);
+// exitCode, not process.exit(): the latter races libuv teardown on Node 26/Windows
+if (fail > 0) process.exitCode = 1;
