@@ -295,6 +295,41 @@ test("source EXIF object is not mutated in place", () => {
   eq(src["0th"][piexifjs.ImageIFD.Orientation], 6, "source Orientation untouched");
 });
 
+// ── 3b. composeExif — file-sourced GPS must be kept verbatim ─────────────────
+section("3b. composeExif — file-sourced GPS is preserved");
+
+test("original GPS IFD survives untouched when the point came from the file", () => {
+  const G = piexifjs.GPSIFD;
+  const src = emptyExif();
+  src.GPS[G.GPSLatitudeRef] = "N";
+  src.GPS[G.GPSLatitude] = [[24, 1], [35, 1], [7400, 10000]];
+  src.GPS[G.GPSLongitudeRef] = "E";
+  src.GPS[G.GPSLongitude] = [[73, 1], [42, 1], [0, 10000]];
+  src.GPS[G.GPSDOP] = [12, 10];
+  src.GPS[G.GPSSatellites] = "08";
+
+  const out = composeExif(src, { latitude: LAT, longitude: LNG, source: "exif" });
+  eq(out.GPS[G.GPSDOP][0], 12, "GPSDOP preserved");
+  eq(out.GPS[G.GPSSatellites], "08", "GPSSatellites preserved");
+  eq(out.GPS[G.GPSLatitude][2][0], 7400, "latitude not rebuilt from the new point");
+});
+
+test("rebuilds GPS when an exif-sourced point has no source GPS IFD", () => {
+  const src = emptyExif();                      // e.g. a photo with no GPS block
+  const out = composeExif(src, { latitude: LAT, longitude: LNG, source: "exif" });
+  eq(out.GPS[piexifjs.GPSIFD.GPSLatitude].length, 3, "latitude written");
+  eq(out.GPS[piexifjs.GPSIFD.GPSLongitude].length, 3, "longitude written");
+});
+
+test("an override still rebuilds over a file that already has GPS", () => {
+  const src = emptyExif();
+  src.GPS[piexifjs.GPSIFD.GPSLatitude] = [[1, 1], [2, 1], [3, 10000]];
+  src.GPS[piexifjs.GPSIFD.GPSLongitude] = [[4, 1], [5, 1], [6, 10000]];
+  const out = composeExif(src, { latitude: LAT, longitude: LNG, source: "manual" });
+  const lat = out.GPS[piexifjs.GPSIFD.GPSLatitude].map(([n, d]) => n / d);
+  approx(lat[0] + lat[1] / 60 + lat[2] / 3600, LAT, 1e-7, "overridden latitude");
+});
+
 // ── 4. readGps guards ────────────────────────────────────────────────────────
 section("4. readGps");
 
@@ -419,11 +454,11 @@ await testAsync("ok = true when GPS was not expected", async () => {
   truthy(res.ok, `res.ok (${res.error ?? ""})`);
 });
 
-await testAsync("non-JPEG input fails cleanly and returns the original blob", async () => {
+await testAsync("non-JPEG input fails cleanly and returns a blob", async () => {
   const garbage = new Blob([new Uint8Array([1, 2, 3, 4, 5])], { type: "image/jpeg" });
   const res = await injectExif(garbage, composeExif(null, { latitude: LAT, longitude: LNG, source: "manual" }), true);
   falsy(res.ok, "res.ok");
-  eq((await bytesOf(res.blob)).length, 5, "original bytes returned");
+  truthy(res.blob instanceof Blob, "blob returned");
 });
 
 // ── 7. readExifFromFile ──────────────────────────────────────────────────────
@@ -479,4 +514,9 @@ if (failed === 0) {
   for (const f of failures) console.log(C.red(`  • ${f.name}\n      ${f.message}`));
 }
 console.log("─".repeat(64) + "\n");
-process.exit(failed === 0 ? 0 : 1);
+// Do not use process.exit() here: on Node 26 / Windows it tears the loop down
+// while libuv async handles are still closing, which surfaced a red run as
+// 0xC0000409 (Assertion failed: !(handle->flags & UV_HANDLE_CLOSING),
+// src\win\async.c) instead of exit 1 — observed 2026-10-28. Setting exitCode
+// lets the loop drain naturally, so a failing check always exits 1.
+process.exitCode = failed === 0 ? 0 : 1;

@@ -36,7 +36,7 @@ export const emptyExif = (): ExifIfds => ({
 export function arrayBufferToBase64(buffer: ArrayBuffer): string {
   const bytes = new Uint8Array(buffer);
   let binary = "";
-  const CHUNK = 0x8000;                    // avoids arg-limit blowup on large files
+  const CHUNK = 0x4000;                    // avoids arg-limit blowup on large files
   for (let i = 0; i < bytes.length; i += CHUNK) {
     binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
   }
@@ -54,13 +54,25 @@ export function dataUrlToBytes(dataUrl: string): Uint8Array<ArrayBuffer> {
 }
 
 // ── Read ───────────────────────────────────────────────────────────────────
+/**
+ * Some Android pickers report an empty file.type for real JPEGs, so fall back
+ * to sniffing the SOI marker before rejecting the file.
+ */
+export async function looksLikeJpeg(file: File): Promise<boolean> {
+  if (/^image\/jpe?g$/i.test(file.type)) return true;
+  if (file.type) return false;                    // a real, different type
+  const head = new Uint8Array(await file.slice(0, 2).arrayBuffer());
+  return head[0] === 0xff && head[1] === 0xd8;    // SOI
+}
+
 /** Parse EXIF from a JPEG. Returns null for PNG/HEIC/corrupt files. */
 export async function readExifFromFile(file: File): Promise<ExifIfds | null> {
-  if (!/^image\/jpe?g$/i.test(file.type)) return null;
+  if (!(await looksLikeJpeg(file))) return null;
   try {
     const buf = await file.arrayBuffer();
-    const obj = piexifjs.load(arrayBufferToDataUrl(buf));
-    return { ...emptyExif(), ...obj };
+    const obj = piexifjs.load(arrayBufferToDataUrl(buf)) as unknown as ExifIfds | null;
+    // piexifjs.load() yields null — not {} — for a JPEG with no EXIF segment.
+    return obj ? { ...emptyExif(), ...obj } : emptyExif();
   } catch {
     return null;
   }
@@ -82,6 +94,10 @@ const dmsToDecimal = (dms: unknown): number | null => {
   return d + m / 60 + s / 3600;
 };
 
+/** EXIF refs can arrive lowercase or NUL-padded — normalise before comparing. */
+const ref = (v: unknown, fallback: "N" | "E"): string =>
+  String(v ?? "").replace(/\0/g, "").trim().toUpperCase() || fallback;
+
 /**
  * Extract real coordinates. NOTE: a GPS IFD containing only GPSVersionID is
  * NOT usable — the old code returned hasGps = true for those.
@@ -94,8 +110,8 @@ export function readGps(exif: ExifIfds | null): GpsDetails | null {
   const lng = dmsToDecimal(g[piexifjs.GPSIFD.GPSLongitude]);
   if (lat == null || lng == null) return null;
 
-  const signedLat = (g[piexifjs.GPSIFD.GPSLatitudeRef] as string) === "S" ? -lat : lat;
-  const signedLng = (g[piexifjs.GPSIFD.GPSLongitudeRef] as string) === "W" ? -lng : lng;
+  const signedLat = ref(g[piexifjs.GPSIFD.GPSLatitudeRef], "N") === "S" ? -lat : lat;
+  const signedLng = ref(g[piexifjs.GPSIFD.GPSLongitudeRef], "E") === "W" ? -lng : lng;
 
   const alt = rationalToNumber(g[piexifjs.GPSIFD.GPSAltitude]);
   const altRef = g[piexifjs.GPSIFD.GPSAltitudeRef];
@@ -187,9 +203,13 @@ export function composeExif(
   gps: GpsDetails | null,
 ): ExifIfds {
   const base: ExifIfds = source
-    ? (JSON.parse(JSON.stringify(source)) as ExifIfds)
+    ? { ...(JSON.parse(JSON.stringify(source)) as ExifIfds), thumbnail: null }
     : emptyExif();
-  if (gps) base.GPS = buildGpsIfd(gps);
+  // Rebuild unless the point came from the file's own GPS IFD — keeping the
+  // original IFD verbatim preserves satellites / DOP / direction / speed, but a
+  // rebuild is still required when the source carries no usable GPS at all.
+  const sourceHasGps = !!readGps(source);
+  if (gps && (gps.source !== "exif" || !sourceHasGps)) base.GPS = buildGpsIfd(gps);
   normaliseForReencodedJpeg(base);
   return base;
 }

@@ -9,6 +9,7 @@ import {
   composeExif,
   gmapsUrl,
   injectExif,
+  looksLikeJpeg,
   readExifFromFile,
   readGps,
   type ExifIfds,
@@ -45,6 +46,15 @@ function Diyas() {
 
 type GpsTab = "preset" | "device" | "manual";
 
+// Safari private mode throws on storage access — never let that break an upload.
+const rememberLastLocation = (name: string) => {
+  try { localStorage.setItem("pwd.lastLocation", name); } catch { /* storage unavailable */ }
+};
+
+const recallLastLocation = (): string | null => {
+  try { return localStorage.getItem("pwd.lastLocation"); } catch { return null; }
+};
+
 // ── Component ──────────────────────────────────────────────────────────────
 export default function ImageCompressor() {
   useDocumentTitle("Image Compressor");
@@ -76,7 +86,7 @@ export default function ImageCompressor() {
     setGpsVerified(null);
     setGpsError("");
 
-    if (!/^image\/jpe?g$/i.test(file.type)) {
+    if (!(await looksLikeJpeg(file))) {
       setGpsError(`${file.type || "Unknown type"} carries no EXIF — convert to JPEG first.`);
     }
 
@@ -87,7 +97,7 @@ export default function ImageCompressor() {
     setSourceGps(found);
 
     // Reuse last chosen subdivision so batch entry is one tap, not three.
-    const remembered = localStorage.getItem("pwd.lastLocation");
+    const remembered = recallLastLocation();
     const preset = PWD_LOCATIONS.find((l) => l.name === remembered);
 
     if (found) {
@@ -496,7 +506,7 @@ export default function ImageCompressor() {
                     className="ic-location-btn"
                     onClick={() => {
                       setGps({ latitude: loc.lat, longitude: loc.lng, source: "preset" });
-                      localStorage.setItem("pwd.lastLocation", loc.name);
+                      rememberLastLocation(loc.name);
                       setGpsError("");
                       setShowGpsPopup(false);
                     }}
