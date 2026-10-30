@@ -1,122 +1,212 @@
 /**
- * Audit Reply Page
- * ─────────────────
- * Tab 1 — Existing Paras  : pre-loaded CASES, reply + comments input, DOCX + Print
+ * Audit Reply — Workspace
+ * ───────────────────────
+ * The working surface behind the landing/upload steps in `AuditReply/index.tsx`.
+ *
+ * Tab 1 — Existing Paras  : pre-loaded CASES with reorder (↑↓), insert-between (➕),
+ *                           extra rows, reply + comments, DOCX + Print
  * Tab 2 — Fresh Para Entry : image upload, manual para fields, reply + comments, DOCX + Print
+ *
+ * The `#print-existing` / `#print-fresh` DOM contract, the `audit-reply-data` /
+ * `audit-order` / `audit-extra-rows` / `audit-fresh-paras` storage keys and the
+ * `audit-print` print scope are unchanged — the smoke harnesses pin them.
  */
 import { CASES } from "@/data/audit-cases";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { useFreshParas, type FreshPara } from "@/hooks/useFreshParas";
-import { useTransliterate } from "@/hooks/useTransliterate";
 import { generateDocx } from "@/lib/generate-docx";
 import { generateFreshDocx } from "@/lib/generate-fresh-docx";
 import { usePrintPage } from "@/lib/printPage";
+import { transliterateLastWord } from "@/lib/roman-to-hindi";
 import { saveSnapshot, VAULT_TOOL } from "@/lib/vault";
 import {
+  ArrowDown,
   ArrowLeft,
+  ArrowUp,
   Download,
   FileText,
   ImagePlus,
   Languages,
   Plus,
+  PlusCircle,
   Printer,
   Trash2,
   X
 } from "lucide-react";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
+import type { AuditTab } from "./types";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Types
+// ─────────────────────────────────────────────────────────────────────────────
+interface CaseEntry {
+  no: string;
+  header: string;
+  gist: string;
+  resp: string;
+  obs: string;
+  defaultReply?: string;
+}
+
+interface ReplyData {
+  reply: string;
+  comments: string;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Storage helpers
 // ─────────────────────────────────────────────────────────────────────────────
-function loadReplies() {
+function loadFromStorage(): Record<string, ReplyData> {
   try {
-    const d = localStorage.getItem("audit-reply-data");
+    const d = localStorage.getItem('audit-reply-data');
     return d ? JSON.parse(d) : {};
   } catch {
     return {};
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ReplyBox — textarea with per-instance Roman→Hindi toggle
-// ─────────────────────────────────────────────────────────────────────────────
-interface ReplyBoxProps {
-  value: string;
-  onChange: (v: string) => void;
-  placeholder: string;
-  bgClass: string;
-  /** Show the HI/EN transliteration toggle (reply column only) */
-  withTranslit?: boolean;
-  minHeight?: string;
+function loadOrder(): string[] {
+  try {
+    const d = localStorage.getItem('audit-order');
+    return d ? JSON.parse(d) : [];
+  } catch {
+    return [];
+  }
 }
 
-function ReplyBox({
-  value,
-  onChange,
-  placeholder,
-  bgClass,
-  withTranslit = false,
-  minHeight = "min-h-[220px]",
-}: ReplyBoxProps) {
-  const [hi, setHi] = useState(withTranslit); // ON by default for reply cols
-  const { handleKeyDown } = useTransliterate(value, onChange);
+function loadExtraRows(): CaseEntry[] {
+  try {
+    const d = localStorage.getItem('audit-extra-rows');
+    return d ? JSON.parse(d) : [];
+  } catch {
+    return [];
+  }
+}
+
+/** Seed any missing reply with the case's default reply (does not clobber edits). */
+function seedDefaults(stored: Record<string, ReplyData>, cases: CaseEntry[]): Record<string, ReplyData> {
+  const result = { ...stored };
+  for (const c of cases) {
+    if (!result[c.no]?.reply && c.defaultReply)
+      result[c.no] = { reply: c.defaultReply, comments: result[c.no]?.comments ?? '' };
+  }
+  return result;
+}
+
+/** Apply a saved order to the case list; unknown keys fall back to source order. */
+function applyOrder(cases: CaseEntry[], order: string[]): CaseEntry[] {
+  if (!order.length) return cases;
+  const map = new Map(cases.map(c => [c.no, c]));
+  const ordered: CaseEntry[] = [];
+  for (const key of order) { if (map.has(key)) ordered.push(map.get(key)!); }
+  for (const c of cases) { if (!order.includes(c.no)) ordered.push(c); }
+  return ordered;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Roman→Hindi textarea — per-instance toggle, offline dictionary conversion
+// ─────────────────────────────────────────────────────────────────────────────
+function HindiTextarea({ value, onChange, placeholder, bgClass }:
+  { value: string; onChange: (v: string) => void; placeholder: string; bgClass: string }) {
+  const [romanMode, setRomanMode] = useState(false);
+  const ref = useRef<HTMLTextAreaElement>(null);
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (!romanMode) return;
+    if (e.key === ' ' || e.key === 'Enter') {
+      e.preventDefault();
+      const cursor = ref.current!.selectionStart;
+      const before = value.slice(0, cursor);
+      const after = value.slice(cursor);
+      const converted = transliterateLastWord(before) + (e.key === 'Enter' ? '\n' : ' ');
+      onChange(converted + after);
+      requestAnimationFrame(() => {
+        if (ref.current) { ref.current.selectionStart = converted.length; ref.current.selectionEnd = converted.length; }
+      });
+    }
+  }
 
   return (
-    <div className={`relative w-full h-full ${bgClass}`}>
-      {withTranslit && (
-        <button
-          type="button"
-          title={hi ? "Roman→Hindi ON — click to switch off" : "Roman→Hindi OFF — click to switch on"}
-          onClick={() => setHi(p => !p)}
-          className={`absolute top-2 right-2 z-10 flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold border transition-colors select-none ${hi
-            ? "bg-orange-500 text-white border-orange-600 shadow"
-            : "bg-gray-100 text-gray-500 border-gray-300"
-            }`}
-        >
+    <div className={`relative flex flex-col h-full ${bgClass}`}>
+      <div className="flex items-center justify-end px-2 py-1 border-b border-border/40 print:hidden">
+        <button type="button" onClick={() => setRomanMode(m => !m)}
+          title={romanMode ? 'Roman→Hindi ON — click to switch off' : 'Roman→Hindi OFF — click to switch on'}
+          className={`flex items-center gap-1 text-xs px-2 py-0.5 rounded font-semibold transition-colors select-none ${romanMode
+            ? 'bg-orange-500 text-white shadow'
+            : 'bg-muted text-muted-foreground hover:bg-orange-100 hover:text-orange-700'}`}>
           <Languages className="w-3 h-3" />
-          {hi ? "HI" : "EN"}
+          {romanMode ? 'रo ON' : 'रo'}
         </button>
-      )}
-      <textarea
-        className={`w-full h-full ${minHeight} p-3 pr-14 bg-transparent resize-y outline-none placeholder:text-foreground/30 text-sm leading-relaxed`}
-        placeholder={placeholder}
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        onKeyDown={hi ? handleKeyDown : undefined}
-        lang={hi ? "hi" : undefined}
-        spellCheck={false}
-      />
-      {hi && (
-        <span className="absolute bottom-1.5 left-3 text-[9px] text-orange-400 pointer-events-none select-none">
-          Roman type → Space / Enter = Hindi
-        </span>
+      </div>
+      <textarea ref={ref}
+        className={`w-full flex-1 ${romanMode ? 'min-h-[206px]' : 'min-h-[220px]'} p-3 bg-transparent resize-y outline-none placeholder:text-foreground/30 text-sm leading-relaxed ${romanMode ? 'font-mono' : ''}`}
+        placeholder={romanMode ? 'Roman mein type karein (space pe Hindi)...' : placeholder}
+        value={value} onChange={e => onChange(e.target.value)} onKeyDown={handleKeyDown} />
+      {romanMode && (
+        <div className="px-2 py-1 text-[10px] text-orange-600 bg-orange-50 dark:bg-orange-950/30 border-t border-orange-200 print:hidden">
+          spacebar → Hindi: <code>mange</code>→मांगे <code>sanlagn</code>→संलग्न <code>nirast</code>→निरस्त
+        </div>
       )}
     </div>
   );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Shared table chrome
+// Inline insert form — slides in below the clicked row to add a new para
 // ─────────────────────────────────────────────────────────────────────────────
-function TableHead({ showTranslitHint = false }: { showTranslitHint?: boolean }) {
+function InlineInsertForm({ afterIndex, onAdd, onCancel }:
+  { afterIndex: number; onAdd: (row: CaseEntry, after: number) => void; onCancel: () => void }) {
+  const [form, setForm] = useState<CaseEntry>({ no: `new-${Date.now()}`, header: '', gist: '', resp: '', obs: '' });
+  function set(k: keyof CaseEntry, v: string) { setForm(p => ({ ...p, [k]: v })); }
+  const cls = 'w-full border border-border rounded px-2 py-1.5 text-xs bg-background resize-none outline-none focus:ring-1 focus:ring-primary';
+
   return (
-    <thead>
-      <tr className="bg-muted text-muted-foreground border-b border-border text-[11px] uppercase tracking-wider font-semibold">
-        <th className="border-r border-border p-2 w-14 text-center">Para</th>
-        <th className="border-r border-border p-2 w-[17%] text-left">संक्षिप्त विवरण</th>
-        <th className="border-r border-border p-2 w-[22%] text-left">अंकेक्षण आपत्ति</th>
-        <th className="border-r border-border p-2 w-[24%] text-left">
-          उत्तर (Reply)
-          {showTranslitHint && (
-            <span className="ml-1 normal-case font-normal text-orange-400 tracking-normal">
-              — Roman→Hindi
-            </span>
-          )}
-        </th>
-        <th className="p-2 w-[33%] text-left">उच्चाधिकारी की टिप्पणी</th>
-      </tr>
-    </thead>
+    <tr className="bg-emerald-50 dark:bg-emerald-950/30 border-t-2 border-emerald-400">
+      <td colSpan={6} className="p-4">
+        <div className="text-xs font-bold text-emerald-700 dark:text-emerald-400 mb-3">
+          ➕ नया पैरा — Insert after position {afterIndex + 1}
+        </div>
+        <div className="grid grid-cols-3 gap-3 mb-3">
+          <div>
+            <label className="text-xs font-semibold text-muted-foreground mb-1 block">Para ID *</label>
+            <input className={cls} placeholder="e.g. 4a" value={form.no} onChange={e => set('no', e.target.value)} />
+          </div>
+          <div className="col-span-2">
+            <label className="text-xs font-semibold text-muted-foreground mb-1 block">उत्तरदायित्व</label>
+            <input className={cls} placeholder="सहायक अभियंता" value={form.resp} onChange={e => set('resp', e.target.value)} />
+          </div>
+        </div>
+        <div className="mb-3">
+          <label className="text-xs font-semibold text-muted-foreground mb-1 block">Header (Package/Work details) *</label>
+          <textarea className={cls} rows={2} placeholder="Package No. / Contractor / W.O. No. / Amount..."
+            value={form.header} onChange={e => set('header', e.target.value)} />
+        </div>
+        <div className="grid grid-cols-2 gap-3 mb-3">
+          <div>
+            <label className="text-xs font-semibold text-muted-foreground mb-1 block">संक्षिप्त विवरण (Gist)</label>
+            <textarea className={cls} rows={3} value={form.gist} onChange={e => set('gist', e.target.value)} />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-muted-foreground mb-1 block">अंकेक्षण आपत्ति (Observation)</label>
+            <textarea className={cls} rows={3} value={form.obs} onChange={e => set('obs', e.target.value)} />
+          </div>
+        </div>
+        <div className="mb-3">
+          <label className="text-xs font-semibold text-muted-foreground mb-1 block">Default Reply (optional)</label>
+          <textarea className={cls} rows={2} value={form.defaultReply || ''} onChange={e => set('defaultReply', e.target.value)} />
+        </div>
+        <div className="flex gap-2">
+          <button onClick={() => { if (form.header.trim()) onAdd({ ...form, no: form.no.trim() || `new-${Date.now()}` }, afterIndex); }}
+            className="bg-emerald-600 text-white text-xs px-4 py-1.5 rounded font-semibold hover:opacity-90">
+            ✅ Insert Here
+          </button>
+          <button onClick={onCancel} className="bg-muted text-muted-foreground text-xs px-4 py-1.5 rounded hover:opacity-80">
+            Cancel
+          </button>
+        </div>
+      </td>
+    </tr>
   );
 }
 
@@ -124,40 +214,85 @@ function TableHead({ showTranslitHint = false }: { showTranslitHint?: boolean })
 // TAB 1 — Existing Paras
 // ─────────────────────────────────────────────────────────────────────────────
 function ExistingParasTab() {
-  const [replies, setReplies] = useState<Record<string, { reply: string; comments: string }>>(
-    loadReplies
+  const [extraRows, setExtraRows] = useState<CaseEntry[]>(loadExtraRows);
+  const baseCases: CaseEntry[] = [...CASES, ...extraRows];
+
+  const [orderedCases, setOrderedCases] = useState<CaseEntry[]>(
+    () => applyOrder(baseCases, loadOrder())
   );
 
-  // Persist to localStorage + vault on every change
+  const [replies, setReplies] = useState<Record<string, ReplyData>>(
+    () => seedDefaults(loadFromStorage(), orderedCases)
+  );
+
+  const [insertAfter, setInsertAfter] = useState<number>(-1);
+
+  // Persist replies + vault snapshot
   useEffect(() => {
-    localStorage.setItem("audit-reply-data", JSON.stringify(replies));
+    localStorage.setItem('audit-reply-data', JSON.stringify(replies));
     const filled = Object.values(replies).filter(r => r.reply.trim() || r.comments.trim()).length;
     if (filled > 0) {
       saveSnapshot(
         VAULT_TOOL.AUDIT_REPLY,
         `Audit Reply — ${filled} para(s) filled — ${new Date().toLocaleString("en-IN")}`,
-        { paras: CASES.length, replies },
+        { paras: orderedCases.length, replies },
       ).catch(() => { });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [replies]);
 
-  const setField = useCallback((no: string, field: "reply" | "comments", v: string) => {
-    setReplies(prev => ({ ...prev, [no]: { ...prev[no], [field]: v } }));
-  }, []);
+  // Persist row order + extra rows
+  useEffect(() => { localStorage.setItem('audit-order', JSON.stringify(orderedCases.map(c => c.no))); }, [orderedCases]);
+  useEffect(() => { localStorage.setItem('audit-extra-rows', JSON.stringify(extraRows)); }, [extraRows]);
 
-  const handleDocx = async () => { await generateDocx(CASES, replies); };
+  function moveUp(idx: number) {
+    if (idx === 0) return;
+    setOrderedCases(prev => { const n = [...prev]; [n[idx - 1], n[idx]] = [n[idx], n[idx - 1]]; return n; });
+  }
+  function moveDown(idx: number) {
+    setOrderedCases(prev => {
+      if (idx >= prev.length - 1) return prev;
+      const n = [...prev]; [n[idx], n[idx + 1]] = [n[idx + 1], n[idx]]; return n;
+    });
+  }
+
+  function handleInsert(row: CaseEntry, afterIndex: number) {
+    const isNew = !CASES.find(c => c.no === row.no);
+    if (isNew) setExtraRows(prev => [...prev, row]);
+    setOrderedCases(prev => { const n = [...prev]; n.splice(afterIndex + 1, 0, row); return n; });
+    if (row.defaultReply && !replies[row.no]?.reply)
+      setReplies(prev => ({ ...prev, [row.no]: { reply: row.defaultReply!, comments: '' } }));
+    setInsertAfter(-1);
+  }
+
+  function handleDelete(no: string) {
+    if (!confirm(`Para "${no}" को हटाएं?`)) return;
+    setExtraRows(prev => prev.filter(r => r.no !== no));
+    setOrderedCases(prev => prev.filter(c => c.no !== no));
+  }
+
+  function handleReplyChange(paraNo: string, field: 'reply' | 'comments', value: string) {
+    setReplies(prev => ({ ...prev, [paraNo]: { ...prev[paraNo], [field]: value } }));
+  }
+
+  const handleDocx = async () => { await generateDocx(orderedCases as typeof CASES, replies); };
 
   const handlePrint = () => {
     document.title = "Audit Reply — जिला प्रभाग II उदयपुर";
     window.print();
   };
 
+  const isExtra = (no: string) => !CASES.find(c => c.no === no);
+
   return (
     <div className="flex flex-col gap-0">
       {/* Tool bar */}
       <div className="flex items-center justify-between px-4 py-2 bg-muted/40 border-b border-border print:hidden">
         <span className="text-xs text-muted-foreground">
-          {CASES.length} paras loaded &nbsp;·&nbsp; Replies auto-saved
+          {orderedCases.length} paras loaded &nbsp;·&nbsp; Replies auto-saved &nbsp;·&nbsp;
+          <span className="font-semibold">↑↓</span> reorder &nbsp;
+          <span className="font-semibold">➕</span> insert &nbsp;
+          <span className="font-semibold">रo</span> Roman→Hindi
         </span>
         <div className="flex gap-2">
           <button
@@ -180,20 +315,62 @@ function ExistingParasTab() {
       {/* Table */}
       <div id="print-existing" className="overflow-x-auto">
         <table className="w-full border-collapse text-sm">
-          <TableHead showTranslitHint />
+          <thead>
+            <tr className="bg-muted text-muted-foreground border-b border-border text-[11px] uppercase tracking-wider font-semibold">
+              <th className="border-r border-border p-2 w-16 text-center">क्र.</th>
+              <th className="border-r border-border p-2 w-[15%] text-left">संक्षिप्त विवरण</th>
+              <th className="border-r border-border p-2 w-[9%] text-left">उत्तरदायित्व</th>
+              <th className="border-r border-border p-2 w-[20%] text-left">अंकेक्षण आपत्ति</th>
+              <th className="border-r border-border p-2 w-[22%] text-left">
+                उत्तर (Reply) <span className="text-orange-500 normal-case">रo</span>
+              </th>
+              <th className="p-2 w-[22%] text-left">
+                उच्चाधिकारी की टिप्पणी <span className="text-orange-500 normal-case">रo</span>
+              </th>
+            </tr>
+          </thead>
           <tbody>
-            {CASES.map(c => (
+            {orderedCases.map((c, idx) => (
               <React.Fragment key={c.no}>
                 {/* header row */}
                 <tr className="border-t-2 border-border/60">
                   <td
                     rowSpan={2}
-                    className="border-r border-b border-border p-2 text-center align-top font-bold text-lg text-primary/80 bg-muted/20"
+                    className="border-r border-b border-border p-2 text-center align-top font-bold text-primary/80 bg-muted/20"
                   >
-                    {c.no}
+                    {/* Serial = current position; #no = stable case id */}
+                    <div className="text-lg leading-none mt-0.5">{idx + 1}</div>
+                    <div className="text-[9px] text-muted-foreground mt-0.5 font-normal leading-none">#{c.no}</div>
+
+                    {/* ↑↓ reorder */}
+                    <div className="flex flex-col items-center gap-0.5 mt-2 print:hidden">
+                      <button onClick={() => moveUp(idx)} disabled={idx === 0}
+                        title="Move up" className="p-0.5 rounded hover:bg-primary/10 disabled:opacity-20 disabled:cursor-not-allowed">
+                        <ArrowUp className="w-3.5 h-3.5 text-primary" />
+                      </button>
+                      <button onClick={() => moveDown(idx)} disabled={idx === orderedCases.length - 1}
+                        title="Move down" className="p-0.5 rounded hover:bg-primary/10 disabled:opacity-20 disabled:cursor-not-allowed">
+                        <ArrowDown className="w-3.5 h-3.5 text-primary" />
+                      </button>
+                    </div>
+
+                    {/* ➕ insert after this row */}
+                    <button onClick={() => setInsertAfter(v => v === idx ? -1 : idx)}
+                      title="Insert new para after this row"
+                      className={`mt-1.5 p-0.5 rounded text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 print:hidden ${insertAfter === idx ? 'bg-emerald-100' : ''}`}>
+                      <PlusCircle className="w-3.5 h-3.5" />
+                    </button>
+
+                    {/* 🗑 delete (extra rows only) */}
+                    {isExtra(c.no) && (
+                      <button onClick={() => handleDelete(c.no)} title="Delete"
+                        className="mt-1 p-0.5 rounded text-red-400 hover:text-red-600 print:hidden">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                   </td>
                   <td
-                    colSpan={4}
+                    colSpan={5}
                     className="border-b border-border p-2 bg-muted/10 font-medium whitespace-pre-wrap text-[11px] text-foreground/75 leading-relaxed font-mono"
                   >
                     {c.header}
@@ -204,29 +381,46 @@ function ExistingParasTab() {
                   <td className="border-r border-border p-3 font-semibold whitespace-pre-wrap align-top text-foreground/90 leading-relaxed text-xs">
                     {c.gist}
                   </td>
+                  <td className="border-r border-border p-3 whitespace-pre-wrap align-top text-foreground/70 font-medium text-xs">
+                    {c.resp}
+                  </td>
                   <td className="border-r border-border p-3 whitespace-pre-wrap align-top leading-relaxed text-xs">
                     {c.obs}
                   </td>
-                  <td className="border-r border-border p-0 align-top">
-                    <ReplyBox
-                      value={replies[c.no]?.reply || ""}
-                      onChange={v => setField(c.no, "reply", v)}
-                      placeholder="यहाँ उत्तर टाइप करें… (Roman → Space = Hindi)"
-                      bgClass="bg-[#FFFDE7] dark:bg-[#3a3820] focus-within:ring-2 focus-within:ring-inset focus-within:ring-orange-400"
-                      withTranslit
+                  <td className="border-r border-border p-0 align-top bg-[#FFFDE7] dark:bg-[#3a3820] focus-within:ring-2 focus-within:ring-inset focus-within:ring-orange-400">
+                    <HindiTextarea
+                      value={replies[c.no]?.reply || ''}
+                      onChange={v => handleReplyChange(c.no, 'reply', v)}
+                      placeholder="यहाँ उत्तर टाइप करें… (रo ON → space = Hindi)"
+                      bgClass="bg-[#FFFDE7] dark:bg-[#3a3820]"
                     />
                   </td>
                   <td className="p-0 align-top bg-[#E3F2FD] dark:bg-[#1a3a5a] focus-within:ring-2 focus-within:ring-inset focus-within:ring-blue-400">
-                    <textarea
-                      className="w-full min-h-[220px] p-3 bg-transparent resize-y outline-none placeholder:text-foreground/30 text-sm leading-relaxed"
+                    <HindiTextarea
+                      value={replies[c.no]?.comments || ''}
+                      onChange={v => handleReplyChange(c.no, 'comments', v)}
                       placeholder="यहाँ टिप्पणी टाइप करें..."
-                      value={replies[c.no]?.comments || ""}
-                      onChange={e => setField(c.no, "comments", e.target.value)}
+                      bgClass="bg-[#E3F2FD] dark:bg-[#1a3a5a]"
                     />
                   </td>
                 </tr>
+
+                {/* Inline insert form — slides in below the clicked row */}
+                {insertAfter === idx && (
+                  <InlineInsertForm afterIndex={idx} onAdd={handleInsert} onCancel={() => setInsertAfter(-1)} />
+                )}
               </React.Fragment>
             ))}
+
+            {/* Append at end */}
+            <tr className="print:hidden">
+              <td colSpan={6} className="p-3 bg-muted/20 border-t-2 border-dashed border-primary/30">
+                <button onClick={() => setInsertAfter(orderedCases.length - 1)}
+                  className="flex items-center gap-2 text-sm text-primary font-semibold hover:underline mx-auto">
+                  <PlusCircle className="w-4 h-4" /> अंत में नया पैरा जोड़ें (Append at end)
+                </button>
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -379,16 +573,14 @@ function FreshParaCard({
               <label className="block text-[11px] font-semibold text-gray-600 mb-1 uppercase tracking-wide">
                 उत्तर (Reply)
                 <span className="ml-1 normal-case font-normal text-orange-400 tracking-normal">
-                  — Roman→Hindi
+                  — रo Roman→Hindi
                 </span>
               </label>
-              <ReplyBox
+              <HindiTextarea
                 value={para.reply}
                 onChange={v => onUpdate("reply", v)}
-                placeholder="यहाँ उत्तर टाइप करें… (Roman → Space = Hindi)"
+                placeholder="यहाँ उत्तर टाइप करें… (रo ON → space = Hindi)"
                 bgClass="rounded-md border border-orange-200 focus-within:border-orange-400 focus-within:ring-1 focus-within:ring-orange-300"
-                withTranslit
-                minHeight="min-h-[100px]"
               />
             </div>
             <div>
@@ -409,8 +601,13 @@ function FreshParaCard({
   );
 }
 
-function FreshParasTab() {
-  const { paras, addPara, removePara, updatePara, clearAll } = useFreshParas();
+/** The fresh-para store is owned by `AuditWorkspace` so it never remounts on a
+ *  tab switch — a remount would re-apply the upload seed (clobbering edits) and
+ *  drop the in-memory images, which `save()` deliberately strips. */
+type FreshStore = ReturnType<typeof useFreshParas>;
+
+function FreshParasTab({ store }: { store: FreshStore }) {
+  const { paras, addPara, removePara, updatePara, clearAll } = store;
 
   const handleDocx = async () => { await generateFreshDocx(paras); };
 
@@ -490,16 +687,27 @@ function FreshParasTab() {
 // ─────────────────────────────────────────────────────────────────────────────
 // Root page
 // ─────────────────────────────────────────────────────────────────────────────
-type Tab = "existing" | "fresh";
+type Props = {
+  /** Which tab the workspace opens on. */
+  initialTab?: AuditTab;
+  /** Fresh paras handed over by the upload step. Images are in-memory only. */
+  seedFresh?: FreshPara[];
+  /** Return to the audit landing step (rendered by `AuditReply/index.tsx`). */
+  onExit?: () => void;
+};
 
-export default function AuditReplyPage() {
+export default function AuditWorkspace({ initialTab = "existing", seedFresh, onExit }: Props) {
   const [, navigate] = useLocation();
-  const [tab, setTab] = useState<Tab>("existing");
+  const [tab, setTab] = useState<AuditTab>(initialTab);
+  // Owned here (not inside the tab) so a tab switch cannot remount the hook and
+  // re-apply `seedFresh` over the user's edits, or lose their in-memory images.
+  const freshStore = useFreshParas(seedFresh);
 
   useDocumentTitle("Audit Reply — जिला प्रभाग II उदयपुर");
   // Audit tables are wide: restore the A4 landscape @page that the app-wide
-  // print fix removed (E-02). Scoped to this route only.
-  usePrintPage("landscape");
+  // print fix removed (E-02). Scoped to this route only. The issuing footer is
+  // passed explicitly — every other route now prints with no margin box.
+  usePrintPage("landscape", "DRAFTED BY PRIYANKA JAIN, PWD UDAIPUR");
 
   return (
     <div className="audit-print min-h-screen bg-background text-foreground flex flex-col font-sans">
@@ -514,6 +722,16 @@ export default function AuditReplyPage() {
             <ArrowLeft size={14} />
             Home
           </button>
+          {onExit && (
+            <button
+              onClick={onExit}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-white/20 hover:bg-white/30 border border-white/40 text-white text-xs font-bold shrink-0 transition-colors"
+              title="Back to the audit menu"
+            >
+              <FileText size={14} />
+              Menu
+            </button>
+          )}
           <FileText className="w-5 h-5 shrink-0 opacity-80" />
           <h1 className="text-base font-bold tracking-tight leading-tight">
             अंकेक्षण प्रतिवेदन उत्तर / Audit Reply Tool — जिला प्रभाग II, उदयपुर
@@ -527,7 +745,7 @@ export default function AuditReplyPage() {
           [
             { id: "existing", label: "📂 Existing Paras", sub: `${CASES.length} paras` },
             { id: "fresh", label: "🆕 Fresh Para Entry", sub: "upload + fill" },
-          ] as { id: Tab; label: string; sub: string }[]
+          ] as { id: AuditTab; label: string; sub: string }[]
         ).map(t => (
           <button
             key={t.id}
@@ -546,7 +764,7 @@ export default function AuditReplyPage() {
       {/* ── Tab content ──────────────────────────────────────────────── */}
       <main className="flex-1 overflow-auto">
         {tab === "existing" && <ExistingParasTab />}
-        {tab === "fresh" && <FreshParasTab />}
+        {tab === "fresh" && <FreshParasTab store={freshStore} />}
       </main>
     </div>
   );

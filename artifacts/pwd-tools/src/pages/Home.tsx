@@ -173,6 +173,14 @@ const TOOLS = [
     directPath: "/rescission-notice",
   },
   {
+    id: "no-dues",
+    icon: "✅",
+    name: "No-Dues Certificate (अदेयता प्रमाण पत्र)",
+    description: "Generate the Hindi forwarding letter for a No-Dues certificate — 3 inputs, A4 preview, print/PDF and DOCX",
+    htmlFile: null,
+    directPath: "/no-dues",
+  },
+  {
     id: "bill-scrutiny",
     icon: "🧾",
     name: "Bill Scrutiny Sheet (React)",

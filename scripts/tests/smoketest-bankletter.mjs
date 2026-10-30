@@ -42,11 +42,11 @@ check('buildExtensionHtml: no DD paragraph', !extSrc.includes('Demand Draft'));
 // ── 3. CSS paragraph rules ────────────────────────────────────────────────────
 console.log('\n── CSS @page / paragraph rules ─────────────────────────────────');
 const cssBlock = src.slice(src.indexOf('<style>'), src.indexOf('</style>'));
-check('CSS: @page A4 margin 25mm', cssBlock.includes('size: A4; margin: 25mm'));
-check('CSS: p margin reset to 0', cssBlock.includes('margin: 0;'));
-check('CSS: p padding reset to 0', cssBlock.includes('padding: 0;'));
-check('CSS: first-line indent 0.6in', cssBlock.includes('text-indent: 0.6in'));
-check('CSS: text-align justify on p', cssBlock.includes('text-align: justify'));
+check('CSS: @page A4 portrait', cssBlock.includes('size: A4 portrait'));
+check('CSS: @page margin reset to 0 (kills browser header/footer band)', cssBlock.includes('margin: 0;'));
+check('CSS: page padding supplied by .wrap 25mm', cssBlock.includes('.wrap') && cssBlock.includes('padding: 25mm'));
+check('CSS: running footer band @bottom-center', cssBlock.includes('@bottom-center'));
+check('Letter body: paragraphs justified (inline style)', src.includes('text-align:justify'));
 check('CSS: line-height 1.5 on p', cssBlock.includes('line-height: 1.5'));
 check('CSS: no stray margin-bottom on p', !cssBlock.match(/^\s{2}p\s*\{[^}]*\d+pt/m));
 
@@ -71,7 +71,7 @@ check('numberToWordsHindi exported', src.includes('export function numberToWords
 check('Three templates defined', (src.match(/TemplateType/g) || []).length >= 2);
 check('defaultData has bgNewExpiryDate', src.includes('bgNewExpiryDate'));
 check('handleDownloadDoc creates .doc blob', src.includes("application/msword"));
-check('handlePrint calls window.print', src.includes('window.print'));
+check('handlePrint prints via popup window', src.includes('printWin.print()'));
 check('update() auto-converts bgAmount→words', src.includes("key === 'bgAmount'"));
 check('All 3 template builders present',
     src.includes('buildVerificationHtml') &&

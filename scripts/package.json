@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "hello": "tsx ./src/hello.ts",
+    "test:smoke": "tsx tests/smoketest-navigation.mjs && tsx tests/smoketest-print.mjs && tsx tests/smoketest-gps.mjs && tsx tests/smoketest-transliteration.mjs && tsx tests/smoketest-audit.mjs && tsx tests/smoketest-bankletter.mjs",
     "test:gps": "tsx tests/smoketest-gps.mjs",
     "test:navigation": "tsx tests/smoketest-navigation.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit"

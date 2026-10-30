@@ -27,7 +27,7 @@ component fails CI.
 | `/` | `Home` |
 | `/tool/:id` | `ToolViewer` |
 | **Correspondence** | |
-| `/audit-reply` | `AuditReplyPage` |
+| `/audit-reply` | `AuditReply` |
 | `/data-vault` | `DataVaultPage` |
 | `/correspondence` | `CorrespondencePage` |
 | `/legal-correspondence` | `LegalCorrespondencePage` |
@@ -45,6 +45,7 @@ component fails CI.
 | `/work-order` | `WorkOrderPage` |
 | `/eot-letter` | `EotLetterPage` |
 | `/rescission-notice` | `RescissionNoticePage` |
+| `/no-dues` | `NoDuesPage` |
 | `/image-compressor` | `ImageCompressor` |
 | *(anything else)* | `NotFound` |
 
@@ -91,11 +92,12 @@ Two rules that catch people out:
 - **Never add a header or footer.** Both margin heights are `0`, with no running
   header, no page numbers and no running footer.
 
-> **Known deviation:** [`src/lib/printPage.ts`](artifacts/pwd-tools/src/lib/printPage.ts)
-> currently injects an `@page` `@bottom-center` margin box reading
-> "DRAFTED BY PRIYANKA JAIN, PWD UDAIPUR", which contradicts the rule above. It
-> is live on every page that calls `usePrintPage`, so the rule is aspirational
-> until that is resolved.
+> **Resolved everywhere except one route:** the footer is opt-in. Call
+> [`usePrintPage`](artifacts/pwd-tools/src/lib/printPage.ts) with no second
+> argument and no `@bottom-center` box is emitted at all. Only the audit
+> workspace (`AuditReply/AuditWorkspace.tsx`) passes the text ("DRAFTED BY
+> PRIYANKA JAIN, PWD UDAIPUR"), so that single route still contradicts the rule
+> above.
 
 ## Deployment: the CSP must allow jsdelivr, or compression self-hosts
 
@@ -144,7 +146,10 @@ Known and accepted, not bugs:
   button and the print-hidden header stay consistent.
 - Any page that prints must call
   [`usePrintPage`](artifacts/pwd-tools/src/lib/printPage.ts) with the right
-  orientation (`"landscape"` for the wide tables).
+  orientation (`"landscape"` for the wide tables). Omit the second argument
+  unless the page genuinely needs a running footer. `index.css` must declare no
+  `@page` of its own — the per-route rule is the only one, and
+  `scripts/tests/smoketest-print.mjs` fails if that drifts.
 - Add or extend a smoketest for anything you change in `src/lib`. The GPS and
   navigation harnesses are wired as CI gates; the rest must at least keep
   passing when run directly.

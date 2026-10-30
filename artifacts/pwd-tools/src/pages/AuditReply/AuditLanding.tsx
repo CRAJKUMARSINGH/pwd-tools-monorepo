@@ -1,5 +1,4 @@
-import { ArrowLeft, FilePlus2, History, Info, Printer, Upload } from "lucide-react";
-import { useLocation } from "wouter";
+import { FilePlus2, History, Info, Printer, Upload } from "lucide-react";
 
 type Props = {
   hasDraft: boolean;
@@ -8,23 +7,13 @@ type Props = {
   onResume: () => void;
 };
 
+/**
+ * Step 1 — the landing screen. The home affordance comes from the `ToolShell`
+ * wrapped around it in `AuditReply/index.tsx`.
+ */
 export default function AuditLanding({ hasDraft, draftLabel, onNew, onResume }: Props) {
-  const [, navigate] = useLocation();
-
   return (
     <div className="mx-auto w-full max-w-3xl px-4 py-8">
-      {/* Hero — the missing affordance, echoed at the top of the content too */}
-      <div className="mb-6 flex items-start gap-3">
-        <button
-          type="button"
-          onClick={() => navigate("/")}
-          className="inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-semibold hover:bg-muted"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
-          मुख्य पृष्ठ / Home
-        </button>
-      </div>
-
       <div className="mb-8">
         <h1 className="text-2xl font-bold leading-tight">ऑडिट पैरा उत्तर</h1>
         <p className="mt-1 text-sm text-muted-foreground">

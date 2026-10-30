@@ -296,7 +296,8 @@
 
   /* Suppress any stray <header> or <footer> HTML elements */
   header,
-  footer {
+  footer,
+  .doc-footer {
     display: none !important;
   }
 
@@ -315,15 +316,25 @@
   }
 
   .a4-page {
-    width: auto !important;
-    height: auto !important;
+    width: 210mm !important;
     min-height: 0 !important;
+    /* 15 mm visible margin on all sides; @page margin:0 (from usePrintPage)
+       removes the browser header/footer band so no extra bottom padding
+       is needed */
     padding: 15mm !important;
     /* this IS the visible page margin */
     margin: 0 !important;
     box-shadow: none !important;
     background: #fff !important;
     color: black !important;
+  }
+
+  /* Multi-sheet tools (e.g. No-Dues: forward + certificate): every .a4-page
+     after the first starts on its own sheet. Screenshots of the stack are
+     unaffected — break-before only applies during pagination. */
+  .a4-page + .a4-page {
+    break-before: page;
+    page-break-before: always;
   }
 
   /* Neutralise the slate wrapper so it contributes no padding/background */
@@ -355,8 +366,9 @@
 }
 
 /* Contractor Registration & Document output: scoped rhythm — do NOT blanket-reset
-   line-height/margins, or every Tailwind mb-*/
-leading-* class on the A4 page dies. */ .contractor-output {
+   line-height or margins, or every Tailwind `mb-*` / `leading-*` class on the
+   A4 page dies. */
+.contractor-output {
   line-height: 1.35;
 }
 
@@ -365,6 +377,9 @@ leading-* class on the A4 page dies. */ .contractor-output {
   line-height: 1.25;
 }
 
+/* `p` is deliberately absent: this rule is unlayered, so it would beat
+   Tailwind's `mb-4` on the note paragraph and collapse the gap above the
+   signature block. */
 .contractor-output h1,
 .contractor-output h2,
 .contractor-output h3 {

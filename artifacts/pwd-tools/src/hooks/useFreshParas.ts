@@ -56,8 +56,19 @@ function makeEmpty(no: number): FreshPara {
   };
 }
 
-export function useFreshParas() {
+/**
+ * Fresh-para store.
+ *
+ * `seed` lets a caller (the audit upload step) hand over paras that exist only
+ * in memory — their `imageDataUrl` is deliberately never written to
+ * localStorage, so seeding has to happen at mount rather than via storage.
+ */
+export function useFreshParas(seed?: FreshPara[]) {
   const [paras, setParas] = useState<FreshPara[]>(() => {
+    if (seed?.length) {
+      save(seed);
+      return seed;
+    }
     const loaded = load();
     return loaded.length > 0 ? loaded : [makeEmpty(1)];
   });

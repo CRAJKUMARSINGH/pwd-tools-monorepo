@@ -1,4 +1,4 @@
-import { readFileSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 
 let pass = 0, fail = 0;
 function check(label, ok) {
@@ -38,8 +38,8 @@ const docxSrc = readFileSync('artifacts/pwd-tools/src/lib/generate-docx.ts', 'ut
     ['replies parameter consumed', /replies\[c\.no\]/],
 ].forEach(([label, re]) => check(`generate-docx: ${label}`, re.test(docxSrc)));
 
-// ── 3. AuditReplyPage.tsx ────────────────────────────────────────────────────
-const pageSrc = readFileSync('artifacts/pwd-tools/src/pages/AuditReplyPage.tsx', 'utf8');
+// ── 3. AuditReply/AuditWorkspace.tsx (the ported original page) ───────────────
+const pageSrc = readFileSync('artifacts/pwd-tools/src/pages/AuditReply/AuditWorkspace.tsx', 'utf8');
 [
     ['localStorage read on init', /localStorage\.getItem/],
     ['localStorage write on change', /localStorage\.setItem/],
@@ -59,7 +59,34 @@ const pageSrc = readFileSync('artifacts/pwd-tools/src/pages/AuditReplyPage.tsx',
     ['reorder moveUp moveDown', /moveUp|moveDown/],
     ['insertAfter state for inline insert', /insertAfter/],
     ['audit-order persisted to localStorage', /audit-order/],
-].forEach(([label, re]) => check(`AuditReplyPage: ${label}`, re.test(pageSrc)));
+    ['landscape @page kept on this route only', /usePrintPage\("landscape"/],
+    ['audit-print scope kept', /audit-print/],
+    ['initialTab / seedFresh props for the step machine', /initialTab[\s\S]*seedFresh/],
+].forEach(([label, re]) => check(`AuditWorkspace: ${label}`, re.test(pageSrc)));
+
+// ── 3a. AuditReply step machine (landing → upload → workspace) ────────────────
+const routeSrc = readFileSync('artifacts/pwd-tools/src/pages/AuditReply/index.tsx', 'utf8');
+const landingSrc = readFileSync('artifacts/pwd-tools/src/pages/AuditReply/AuditLanding.tsx', 'utf8');
+const uploadSrc = readFileSync('artifacts/pwd-tools/src/pages/AuditReply/AuditUploadStep.tsx', 'utf8');
+[
+    ['routed page renders the workspace', /AuditWorkspace/],
+    ['routed page renders the landing', /AuditLanding/],
+    ['routed page renders the upload step', /AuditUploadStep/],
+    ['step machine holds all three steps', /"landing"[\s\S]*"upload"[\s\S]*"workspace"|AuditStep/],
+    ['resume uses stored replies', /audit-reply-data/],
+    ['resume uses stored fresh paras', /audit-fresh-paras/],
+    ['document.title set on the route', /useDocumentTitle\s*\(/],
+    ['home affordance via ToolShell', /<ToolShell\b/],
+].forEach(([label, re]) => check(`AuditReply route: ${label}`, re.test(routeSrc)));
+check('AuditLanding: new + resume affordances', /onNew/.test(landingSrc) && /onResume/.test(landingSrc));
+check('AuditUploadStep: hands picked images to the workspace', /onDone\(/.test(uploadSrc));
+check('AuditUploadStep: reads files as data URLs (survive the step change)', /readAsDataURL/.test(uploadSrc));
+
+// ── 3b. old AuditReplyPage.tsx shim is gone (single source of truth) ──────────
+check(
+    'AuditReplyPage.tsx removed (no re-export shim)',
+    !existsSync('artifacts/pwd-tools/src/pages/AuditReplyPage.tsx'),
+);
 
 // ── 3b. roman-to-hindi.ts ────────────────────────────────────────────────────
 const romanSrc = readFileSync('artifacts/pwd-tools/src/lib/roman-to-hindi.ts', 'utf8');

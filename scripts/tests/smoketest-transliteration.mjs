@@ -146,7 +146,7 @@ check(
 console.log(`\n   Result: "${sentence1}"`);
 
 console.log('\n── localStorage key names ──────────────────────────────────────');
-const pageSrc = readFileSync('artifacts/pwd-tools/src/pages/AuditReplyPage.tsx', 'utf8');
+const pageSrc = readFileSync('artifacts/pwd-tools/src/pages/AuditReply/AuditWorkspace.tsx', 'utf8');
 check('audit-reply-data key used', pageSrc.includes("'audit-reply-data'"));
 check('audit-extra-rows key used', pageSrc.includes("'audit-extra-rows'"));
 

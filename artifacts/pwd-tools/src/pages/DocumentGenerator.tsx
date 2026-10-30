@@ -193,12 +193,16 @@ function buildStandaloneHtml(d: DocumentData): string {
 <title>Contractor Enlistment Order</title>
 <!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]-->
 <style>
-  /* Word has no browser chrome, so it needs a real page margin. */
+  /* Word has no browser chrome, so it needs a real page margin.
+     15 mm all sides per spec. No footer margin box here — this is a Word
+     document, not a browser print, and the smoketest forbids a footer
+     margin box in this file. */
   @page {
     size: A4 portrait;
     margin: 15mm;
   }
-  body { font-family: 'Times New Roman', Times, serif; font-size: 12px; line-height: 1.35; color: #000; margin:0; padding: 0; }
+  body { font-family: 'Times New Roman', Times, serif; font-size: 12px; line-height: 1.35; color: #000; margin: 0; padding: 0; }
+  header, footer { display: none !important; }
   .wrap { max-width: 180mm; margin: 0 auto; }
   table { border-collapse: collapse; width: 100%; }
   .hdr-title { font-family: Arial, Helvetica, sans-serif; font-size:14px; font-weight:bold; text-transform:uppercase; }
@@ -234,6 +238,8 @@ function buildStandaloneHtml(d: DocumentData): string {
   <div style="text-align:center;margin-bottom:14px;">
     <span class="doc-title">CONTRACTOR ENLISTMENT ORDER</span>
   </div>
+
+  <div style="height:24px;" aria-hidden="true"></div>
 
   <p style="text-align:justify;margin-bottom:14px;font-size:12px;">
     In accordance to the Govt. Of Rajasthan enlistment rules F.2(3) FD/Exp. III/97 part dated 24.05.99 (4)
@@ -329,7 +335,9 @@ function TableRow({
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function DocumentGenerator() {
   useDocumentTitle("Document Generator");
-  usePrintPage();
+  // Portrait, and no footer argument — that is what keeps the audit tool's
+  // landscape @page and its margin box off this sheet.
+  usePrintPage("portrait");
   const [data, setData] = useState<DocumentData>(defaultData);
   const pageRef = useRef<HTMLDivElement>(null);
 
@@ -628,7 +636,7 @@ export default function DocumentGenerator() {
           {/* Toolbar (hidden on print) */}
           <div className="max-w-[210mm] mx-auto mb-4 flex flex-wrap items-center justify-between gap-2 hide-on-print">
             <p className="text-xs text-muted-foreground">
-              Disable &quot;Headers and footers&quot; in the print dialog for best output.
+              A4 portrait · fixed margins — browser headers/footers stay clear.
             </p>
             <div className="flex gap-2">
               <Button size="sm" onClick={handlePrint}>
@@ -641,7 +649,7 @@ export default function DocumentGenerator() {
           </div>
 
           {/* ── THE A4 PAGE ── */}
-          <div ref={pageRef} className="a4-page contractor-output doc-font text-[12px] leading-snug">
+          <div ref={pageRef} className="a4-page contractor-output doc-font text-[12px]">
 
             {/* Office Header */}
             <div className="text-left mb-2">
@@ -685,13 +693,15 @@ export default function DocumentGenerator() {
 
             {/* Document Title */}
             <div className="text-center mb-4">
-              <h3 className="text-[14px] font-bold underline underline-offset-4 tracking-wide doc-header-font">
+              <h3 className="text-[14px] font-bold leading-tight underline underline-offset-4 tracking-wide doc-header-font">
                 CONTRACTOR ENLISTMENT ORDER
               </h3>
             </div>
+            {/* Vertical spacer below the document title */}
+            <div className="h-6" aria-hidden="true"></div>
 
             {/* Intro */}
-            <div className="mb-4 text-justify text-[11.5px]">
+            <div className="mb-4 text-justify text-[11.5px] leading-[1.55]">
               <p>
                 In accordance to the Govt. Of Rajasthan enlistment rules F.2(3) FD/Exp. III/97 part dated 24.05.99 (4)
                 FD/Exp.III/99 Dated 23.03.2001 the following firm / Company is hereby enlisted as under:-
@@ -713,14 +723,14 @@ export default function DocumentGenerator() {
             </div>
 
             {/* Note paragraph */}
-            <p className="mb-4 text-[11px]">
+            <p className="mb-4 text-[11px] leading-[1.45]">
               <span className="font-bold">Note: -</span> The Contractor/Firm shall follow the provisions
               laid down under &quot;Rules for Enlistment of contractor in PWD&quot; (Appendix XVI rules 334
               of PWF &amp; AR) and modified to time.
             </p>
 
             {/* Signature Block */}
-            <div className="flex justify-end mb-3">
+            <div className="flex justify-end mb-4">
               <div className="text-center w-[220px]">
                 <div className="h-10"></div>
                 <div className="leading-snug">Executive Engineer</div>
