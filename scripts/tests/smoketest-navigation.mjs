@@ -91,6 +91,17 @@ for (const { route, comp } of routes) {
   }
 }
 
+// Extra check: not-found.tsx — exempt from route loop but must still have Home recovery.
+const notFoundFile = path.join(SRC, "pages/not-found.tsx");
+if (existsSync(notFoundFile)) {
+  const nf = readFileSync(notFoundFile, "utf8");
+  const hasHome = /<ToolShell\b/.test(nf) || /navigate\(\s*["'`]\/["'`]\s*\)/.test(nf);
+  if (!hasHome) {
+    failed++;
+    console.log(`  ✗ not-found.tsx                                  missing Home affordance`);
+  }
+}
+
 console.log(`\n${routes.length} routes checked — ${failed} gap${failed === 1 ? "" : "s"}`);
 // exitCode, not process.exit(): the latter races libuv teardown on Node 26/Windows
 process.exitCode = failed ? 1 : 0;
