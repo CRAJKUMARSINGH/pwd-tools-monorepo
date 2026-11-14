@@ -1,7 +1,9 @@
 import ToolShell from "@/components/ToolShell";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import type { FreshPara } from "@/hooks/useFreshParas";
+import { ArrowLeft } from "lucide-react";
 import { useState } from "react";
+import { useLocation } from "wouter";
 import AuditLanding from "./AuditLanding";
 import AuditUploadStep from "./AuditUploadStep";
 import AuditWorkspace from "./AuditWorkspace";
@@ -66,21 +68,40 @@ function toFreshParas(inputs: UploadedInput[]): FreshPara[] {
  */
 export default function AuditReplyPage() {
   useDocumentTitle("Audit Reply — जिला प्रभाग II उदयपुर");
+  const [, navigate] = useLocation();
   const [step, setStep] = useState<AuditStep>("landing");
   const [tab, setTab] = useState<AuditTab>("existing");
   const [seedFresh, setSeedFresh] = useState<FreshPara[] | undefined>(undefined);
   const [draft, setDraft] = useState<DraftSummary>(readDraftSummary);
 
+  // Workspace is full-screen and owns its own header; render it standalone
+  // but always prepend the same persistent Back-to-Home bar so the button
+  // is visible in every state without relying on the workspace header.
   if (step === "workspace") {
     return (
-      <AuditWorkspace
-        initialTab={tab}
-        seedFresh={seedFresh}
-        onExit={() => {
-          setDraft(readDraftSummary());
-          setStep("landing");
-        }}
-      />
+      <>
+        {/* ── Persistent Back to Home — visible in every Audit state ── */}
+        <div className="hide-on-print sticky top-0 z-40 flex items-center gap-2 border-b bg-primary px-3 py-2 text-primary-foreground">
+          <button
+            type="button"
+            onClick={() => navigate("/")}
+            aria-label="Back to Home"
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-primary-foreground/30 bg-white/10 px-3 py-1.5 text-xs font-bold transition-colors hover:bg-white/20"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
+            ← Back to Home
+          </button>
+          <span className="truncate text-xs font-semibold opacity-80">Audit Reply</span>
+        </div>
+        <AuditWorkspace
+          initialTab={tab}
+          seedFresh={seedFresh}
+          onExit={() => {
+            setDraft(readDraftSummary());
+            setStep("landing");
+          }}
+        />
+      </>
     );
   }
 

@@ -18,12 +18,12 @@ export default function ToolShell({ title, subtitle, actions, children }: Props)
         <button
           type="button"
           onClick={() => navigate("/")}
-          aria-label="होम / Home"
-          title="Home"
+          aria-label="Back to Home"
+          title="Back to Home"
           className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-primary-foreground/30 px-2.5 py-1.5 text-xs font-semibold transition-colors hover:bg-primary-foreground/10"
         >
           <HomeIcon className="h-3.5 w-3.5" aria-hidden="true" />
-          होम
+          ← Home
         </button>
 
         <div className="min-w-0">

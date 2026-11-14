@@ -21,7 +21,6 @@ import { transliterateLastWord } from "@/lib/roman-to-hindi";
 import { saveSnapshot, VAULT_TOOL } from "@/lib/vault";
 import {
   ArrowDown,
-  ArrowLeft,
   ArrowUp,
   Download,
   FileText,
@@ -34,7 +33,6 @@ import {
   X
 } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
-import { useLocation } from "wouter";
 import type { AuditTab } from "./types";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -247,12 +245,12 @@ function ExistingParasTab() {
 
   function moveUp(idx: number) {
     if (idx === 0) return;
-    setOrderedCases(prev => { const n = [...prev]; [n[idx - 1], n[idx]] = [n[idx], n[idx - 1]]; return n; });
+    setOrderedCases(prev => { const n = [...prev];[n[idx - 1], n[idx]] = [n[idx], n[idx - 1]]; return n; });
   }
   function moveDown(idx: number) {
     setOrderedCases(prev => {
       if (idx >= prev.length - 1) return prev;
-      const n = [...prev]; [n[idx], n[idx + 1]] = [n[idx + 1], n[idx]]; return n;
+      const n = [...prev];[n[idx], n[idx + 1]] = [n[idx + 1], n[idx]]; return n;
     });
   }
 
@@ -697,7 +695,6 @@ type Props = {
 };
 
 export default function AuditWorkspace({ initialTab = "existing", seedFresh, onExit }: Props) {
-  const [, navigate] = useLocation();
   const [tab, setTab] = useState<AuditTab>(initialTab);
   // Owned here (not inside the tab) so a tab switch cannot remount the hook and
   // re-apply `seedFresh` over the user's edits, or lose their in-memory images.
@@ -712,16 +709,8 @@ export default function AuditWorkspace({ initialTab = "existing", seedFresh, onE
   return (
     <div className="audit-print min-h-screen bg-background text-foreground flex flex-col font-sans">
       {/* ── Sticky header ────────────────────────────────────────────── */}
-      <header className="bg-primary text-primary-foreground py-3 px-5 shadow-md sticky top-0 z-20 print:hidden">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => navigate("/")}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-white/20 hover:bg-white/30 border border-white/40 text-white text-xs font-bold shrink-0 transition-colors"
-            title="Back to Home"
-          >
-            <ArrowLeft size={14} />
-            Home
-          </button>
+      <header className="bg-primary text-primary-foreground py-2 px-5 shadow-md sticky top-0 z-20 print:hidden">
+        <div className="flex items-center gap-3 min-w-0">
           {onExit && (
             <button
               onClick={onExit}
@@ -732,15 +721,14 @@ export default function AuditWorkspace({ initialTab = "existing", seedFresh, onE
               Menu
             </button>
           )}
-          <FileText className="w-5 h-5 shrink-0 opacity-80" />
-          <h1 className="text-base font-bold tracking-tight leading-tight">
-            अंकेक्षण प्रतिवेदन उत्तर / Audit Reply Tool — जिला प्रभाग II, उदयपुर
+          <h1 className="text-sm font-bold tracking-tight leading-tight truncate min-w-0">
+            Audit Reply — जिला प्रभाग II, उदयपुर
           </h1>
         </div>
       </header>
 
       {/* ── Tab bar ──────────────────────────────────────────────────── */}
-      <div className="flex border-b border-border bg-card sticky top-[52px] z-10 print:hidden">
+      <div className="flex border-b border-border bg-card sticky top-[72px] z-10 print:hidden">
         {(
           [
             { id: "existing", label: "📂 Existing Paras", sub: `${CASES.length} paras` },
