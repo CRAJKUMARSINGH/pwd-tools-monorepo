@@ -31,6 +31,7 @@ export function loadLetters(): Letter[] {
       fromOfficeEn: letter.fromOfficeEn ?? "",
       cc: letter.cc ?? "",
       ccEn: letter.ccEn ?? "",
+      toMany: letter.toMany ?? "",
     })) as Letter[];
   } catch {
     return [];

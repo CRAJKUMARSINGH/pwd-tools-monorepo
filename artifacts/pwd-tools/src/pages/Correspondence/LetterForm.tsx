@@ -114,6 +114,7 @@ export default function LetterForm({ initialType, existing, onSubmit, onBack }: 
     fromOfficeEn: existing?.fromOfficeEn ?? DEFAULT_FROM_OFFICE_EN,
     cc: existing?.cc ?? "",
     ccEn: existing?.ccEn ?? "",
+    toMany: existing?.toMany ?? "",
   });
 
   function set(field: keyof LetterFormData, value: string) {
@@ -177,8 +178,8 @@ export default function LetterForm({ initialType, existing, onSubmit, onBack }: 
               ? "Roman→Hindi सक्रिय — Space दबाने पर शब्द हिन्दी में बदलेगा। बंद करने के लिए क्लिक करें।"
               : "Roman लिपि में टाइप करें — Space पर हिन्दी में बदलेगा"}
             className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-semibold border transition-all select-none ${translit
-                ? "bg-amber-500 text-white border-amber-500 shadow-md"
-                : "bg-white text-gray-600 border-gray-300 hover:border-amber-400 hover:text-amber-600"
+              ? "bg-amber-500 text-white border-amber-500 shadow-md"
+              : "bg-white text-gray-600 border-gray-300 hover:border-amber-400 hover:text-amber-600"
               }`}
           >
             <Languages size={15} />
@@ -220,8 +221,8 @@ export default function LetterForm({ initialType, existing, onSubmit, onBack }: 
             <button key={lng} type="button" data-testid={`language-${lng}`}
               onClick={() => setLanguage(lng)}
               className={`px-4 py-2 rounded-md text-sm font-semibold border transition-colors ${form.language === lng
-                  ? "bg-blue-700 text-white border-blue-700"
-                  : "bg-white text-gray-700 border-gray-300 hover:border-blue-400"
+                ? "bg-blue-700 text-white border-blue-700"
+                : "bg-white text-gray-700 border-gray-300 hover:border-blue-400"
                 }`}
             >
               {LANGUAGE_LABEL[lng]}

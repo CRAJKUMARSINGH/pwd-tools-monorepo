@@ -55,6 +55,7 @@ function apiLetterToLocal(l: {
     fromOfficeEn: "",
     cc: l.cc ?? "",
     ccEn: "",
+    toMany: "",
     createdAt: l.createdAt,
     updatedAt: l.updatedAt,
   };

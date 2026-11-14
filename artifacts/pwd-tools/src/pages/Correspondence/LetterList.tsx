@@ -1,5 +1,6 @@
 import { Edit2, Eye, FileText, Mail, Plus, Reply, Trash2 } from "lucide-react";
 import { useState } from "react";
+import LetterTemplates from "./LetterTemplates.tsx";
 import type { Letter, View } from "./types";
 
 interface Props {
