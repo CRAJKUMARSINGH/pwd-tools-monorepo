@@ -23,7 +23,6 @@ import {
   ArrowDown,
   ArrowUp,
   Download,
-  FileText,
   ImagePlus,
   Languages,
   Plus,
@@ -708,27 +707,9 @@ export default function AuditWorkspace({ initialTab = "existing", seedFresh, onE
 
   return (
     <div className="audit-print min-h-screen bg-background text-foreground flex flex-col font-sans">
-      {/* ── Sticky header ────────────────────────────────────────────── */}
-      <header className="bg-primary text-primary-foreground py-2 px-5 shadow-md sticky top-0 z-20 print:hidden">
-        <div className="flex items-center gap-3 min-w-0">
-          {onExit && (
-            <button
-              onClick={onExit}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-white/20 hover:bg-white/30 border border-white/40 text-white text-xs font-bold shrink-0 transition-colors"
-              title="Back to the audit menu"
-            >
-              <FileText size={14} />
-              Menu
-            </button>
-          )}
-          <h1 className="text-sm font-bold tracking-tight leading-tight truncate min-w-0">
-            Audit Reply — जिला प्रभाग II, उदयपुर
-          </h1>
-        </div>
-      </header>
-
       {/* ── Tab bar ──────────────────────────────────────────────────── */}
-      <div className="flex border-b border-border bg-card sticky top-[72px] z-10 print:hidden">
+      {/* top-[41px]: accounts for the single combined header in AuditReplyPage (≈41px). */}
+      <div className="flex border-b border-border bg-card sticky top-[41px] z-10 print:hidden">
         {(
           [
             { id: "existing", label: "📂 Existing Paras", sub: `${CASES.length} paras` },

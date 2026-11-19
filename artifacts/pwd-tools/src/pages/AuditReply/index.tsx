@@ -1,7 +1,7 @@
 import ToolShell from "@/components/ToolShell";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import type { FreshPara } from "@/hooks/useFreshParas";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, FileText } from "lucide-react";
 import { useState } from "react";
 import { useLocation } from "wouter";
 import AuditLanding from "./AuditLanding";
@@ -74,32 +74,48 @@ export default function AuditReplyPage() {
   const [seedFresh, setSeedFresh] = useState<FreshPara[] | undefined>(undefined);
   const [draft, setDraft] = useState<DraftSummary>(readDraftSummary);
 
-  // Workspace is full-screen and owns its own header; render it standalone
-  // but always prepend the same persistent Back-to-Home bar so the button
-  // is visible in every state without relying on the workspace header.
+  // Workspace is full-screen. We render ONE authoritative sticky header here
+  // so there is never a competing header inside AuditWorkspace fighting for
+  // top-0 — that was the root cause of the Back-to-Home bar being obscured.
   if (step === "workspace") {
+    const handleExit = () => {
+      setDraft(readDraftSummary());
+      setStep("landing");
+    };
     return (
       <>
-        {/* ── Persistent Back to Home — visible in every Audit state ── */}
-        <div className="hide-on-print sticky top-0 z-40 flex items-center gap-2 border-b bg-primary px-3 py-2 text-primary-foreground">
+        {/* ── Single combined sticky header — Back to Home + Menu ── */}
+        <header
+          className="hide-on-print sticky top-0 z-40 flex items-center gap-2 border-b bg-primary px-3 py-2 text-primary-foreground shadow-md"
+          style={{ minHeight: "41px" }}
+        >
           <button
             type="button"
             onClick={() => navigate("/")}
             aria-label="Back to Home"
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-primary-foreground/30 bg-white/10 px-3 py-1.5 text-xs font-bold transition-colors hover:bg-white/20"
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-primary-foreground/40 bg-white/15 px-3 py-1.5 text-xs font-bold transition-colors hover:bg-white/30 active:bg-white/40"
           >
             <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
             ← Back to Home
           </button>
-          <span className="truncate text-xs font-semibold opacity-80">Audit Reply</span>
-        </div>
+          <button
+            type="button"
+            onClick={handleExit}
+            aria-label="Back to audit menu"
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-primary-foreground/30 bg-white/10 px-3 py-1.5 text-xs font-semibold transition-colors hover:bg-white/20"
+            title="Back to the audit menu"
+          >
+            <FileText className="h-3.5 w-3.5" aria-hidden="true" />
+            Menu
+          </button>
+          <span className="truncate text-xs font-semibold opacity-80">
+            Audit Reply — जिला प्रभाग II, उदयपुर
+          </span>
+        </header>
         <AuditWorkspace
           initialTab={tab}
           seedFresh={seedFresh}
-          onExit={() => {
-            setDraft(readDraftSummary());
-            setStep("landing");
-          }}
+          onExit={handleExit}
         />
       </>
     );
