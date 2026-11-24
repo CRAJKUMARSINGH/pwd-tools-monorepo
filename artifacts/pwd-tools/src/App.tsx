@@ -22,7 +22,7 @@ import SpeedMoneyTool from "@/pages/SpeedMoneyTool";
 import ToolViewer from "@/pages/ToolViewer";
 import WorkOrderPage from "@/pages/WorkOrderPage";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Route, Switch, Router as WouterRouter, useLocation } from "wouter";
+import { Redirect, Route, Switch, Router as WouterRouter, useLocation } from "wouter";
 
 const queryClient = new QueryClient();
 
@@ -31,7 +31,8 @@ function Router() {
   return (
     <ErrorBoundary key={location}>
       <Switch>
-        <Route path="/" component={Home} />
+        <Route path="/" component={() => <Redirect to="/tool/hindi-bill-note-sheet" />} />
+        <Route path="/home" component={Home} />
         <Route path="/tool/:id" component={ToolViewer} />
         {/* ── Correspondence ── */}
         <Route path="/audit-reply" component={AuditReplyPage} />

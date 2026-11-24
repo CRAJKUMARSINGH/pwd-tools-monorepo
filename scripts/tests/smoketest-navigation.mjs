@@ -52,7 +52,7 @@ const routes = app
 /** Pages that need neither check. */
 const EXEMPT = new Set(["NotFound"]);
 /** Routes that *are* home — nowhere to navigate back to. */
-const HOME_ROUTES = new Set(["/"]);
+const HOME_ROUTES = new Set(["/", "/home"]);
 /** Thin wrappers that render another page which carries the shell itself. */
 const WRAPPERS = new Set(["ContractorRegistration"]);
 
