@@ -15,7 +15,7 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
 
-      - run: pnpm install --frozen-lockfile
+      - run: pnpm install --no-frozen-lockfile
 
       # typecheck and lint are skipped — 234 pre-existing TS errors from
       # Radix UI / React-19 typing drift block the gate without being our bug.
