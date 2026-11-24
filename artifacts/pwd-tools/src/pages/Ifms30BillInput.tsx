@@ -434,15 +434,15 @@ export default function Ifms30BillInput() {
                             </h2>
                             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "12px" }}>
                                 <div>
-                                    <label className="ifms-label" htmlFor="ifms-work-order">11. कुल कार्यादेश राशि (रु.)</label>
+                                    <label className="ifms-label" htmlFor="ifms-work-order">1. कुल कार्यादेश राशि (रु.)</label>
                                     <input id="ifms-work-order" className="ifms-input" type="number" min="0" step="0.01" inputMode="decimal" value={form.totalWorkOrderAmount} onChange={(event) => updateField("totalWorkOrderAmount", event.target.value)} placeholder="0" />
                                 </div>
                                 <div>
-                                    <label className="ifms-label" htmlFor="ifms-last-bill">12A. पिछले बिल तक भुगतान (रु.)</label>
+                                    <label className="ifms-label" htmlFor="ifms-last-bill">2A. पिछले बिल तक भुगतान (रु.)</label>
                                     <input id="ifms-last-bill" className="ifms-input" type="number" min="0" step="0.01" inputMode="decimal" value={form.paymentUptoLastBill} onChange={(event) => updateField("paymentUptoLastBill", event.target.value)} placeholder="0" />
                                 </div>
                                 <div>
-                                    <label className="ifms-label" htmlFor="ifms-this-bill">12B. इस बिल की राशि (रु.)</label>
+                                    <label className="ifms-label" htmlFor="ifms-this-bill">2B. इस बिल की राशि (रु.)</label>
                                     <input id="ifms-this-bill" className="ifms-input" type="number" min="0" step="0.01" inputMode="decimal" value={form.amountThisBill} onChange={(event) => updateField("amountThisBill", event.target.value)} placeholder="0" />
                                 </div>
                             </div>
@@ -496,23 +496,23 @@ export default function Ifms30BillInput() {
                             <h2 style={{ marginBottom: "12px", borderBottom: "1px solid #f48fb1", paddingBottom: "6px", color: "#880e4f", fontSize: "0.95rem", fontWeight: 700 }}>
                                 मद वार विभाजन
                             </h2>
-                            <YesNoSelect id="ifms-bifurcation" label="क्या मद वार विभाजन आवश्यक है?" value={form.headWiseBifurcation} onChange={(value) => updateField("headWiseBifurcation", value)} />
+                            <YesNoSelect id="ifms-bifurcation" label="क्या Budget Headwise विभाजन आवश्यक है?" value={form.headWiseBifurcation} onChange={(value) => updateField("headWiseBifurcation", value)} />
                         </div>
 
                         <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "10px", marginTop: "16px" }}>
                             <button type="button" disabled={exporting !== null} onClick={downloadPdf} style={{ border: "none", borderRadius: "10px", background: "#880e4f", color: "#fff", padding: "12px", fontWeight: 700, cursor: exporting ? "wait" : "pointer", opacity: exporting ? 0.65 : 1 }}>
-                                {exporting === "pdf" ? "पीडीएफ तैयार हो रहा है..." : "पीडीएफ डाउनलोड"}
+                                {exporting === "pdf" ? "Preparing PDF..." : "Download PDF"}
                             </button>
                             <button type="button" disabled={exporting !== null} onClick={downloadImage} style={{ border: "2px solid #e67e22", borderRadius: "10px", background: "#fff8e1", color: "#7b2d00", padding: "12px", fontWeight: 700, cursor: exporting ? "wait" : "pointer", opacity: exporting ? 0.65 : 1 }}>
-                                {exporting === "image" ? "चित्र तैयार हो रहा है..." : "चित्र डाउनलोड"}
+                                {exporting === "image" ? "Preparing Image..." : "Download Image"}
                             </button>
                         </div>
                     </div>
 
                     <div>
                         <div style={{ marginBottom: "12px", borderRadius: "12px", border: "1px solid #f48fb1", background: "linear-gradient(135deg, #fce4ec, #f8bbd0)", padding: "12px 14px" }}>
-                            <h2 style={{ color: "#880e4f", fontSize: "0.95rem", fontWeight: 700 }}>पूर्वावलोकन</h2>
-                            <p style={{ marginTop: "3px", color: "#ad1457", fontSize: "0.75rem" }}>ए4 आकार — विवरण लगभग आधे पृष्ठ में</p>
+                            <h2 style={{ color: "#880e4f", fontSize: "0.95rem", fontWeight: 700 }}>Preview</h2>
+                            <p style={{ marginTop: "3px", color: "#ad1457", fontSize: "0.75rem" }}>output</p>
                         </div>
                         <div style={{ overflowX: "auto", border: "1px solid #d7a259", borderRadius: "10px", background: "#fff", padding: "12px", boxShadow: "0 3px 14px rgba(120, 70, 0, 0.1)" }}>
                             <BillOutput calculation={calculation} />

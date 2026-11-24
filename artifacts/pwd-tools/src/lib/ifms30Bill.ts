@@ -105,7 +105,7 @@ export function calculateIfms30Bill(form: Ifms30BillForm): Ifms30BillCalculation
             : []),
         ["Deposit-II (SD2) (8443) (8443-00-108-00-00)", `Rs. ${formatAmount(securityDeposit)}`],
         ...(depositV > 0
-            ? [["(M.D.) Deposit-Vth (MD5) (8443) (8443-00-108-00-00)", `Rs. ${formatAmount(depositV)}`] as OutputRow]
+            ? [["Deposit-Vth (8443) (8443-00-108-00-00)", `Rs. ${formatAmount(depositV)}`] as OutputRow]
             : []),
         ["Cheque / Amount", `Rs. ${formatAmount(chequeAmount)}`],
         ["Total", `Rs. ${formatAmount(total)}`],

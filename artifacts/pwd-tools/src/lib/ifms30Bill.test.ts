@@ -48,7 +48,7 @@ describe("calculateIfms30Bill", () => {
         expect(result.totalDeductions).toBe(18800);
         expect(result.chequeAmount).toBe(81200);
         expect(result.deductionRows).toContainEqual([
-            "(M.D.) Deposit-Vth (MD5) (8443) (8443-00-108-00-00)",
+            "Deposit-Vth (8443) (8443-00-108-00-00)",
             "Rs. 500",
         ]);
     });
