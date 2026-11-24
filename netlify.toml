@@ -1,12 +1,12 @@
 [build]
-  # Pre-built dist is committed — no build step needed.
-  # Netlify simply serves the already-compiled files.
+  # Install from the repository root so pnpm can link workspace packages.
   base    = "."
-  command = ""
+  command = "pnpm --filter @workspace/pwd-tools build"
   publish = "artifacts/pwd-tools/dist/public"
 
 [build.environment]
   NODE_ENV = "production"
+  PNPM_FLAGS = "--filter=@workspace/pwd-tools... --frozen-lockfile --prod=false"
 
 [[redirects]]
   from   = "/*"

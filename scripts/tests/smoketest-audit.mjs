@@ -61,7 +61,7 @@ const pageSrc = readFileSync('artifacts/pwd-tools/src/pages/AuditReply/AuditWork
     ['audit-order persisted to localStorage', /audit-order/],
     ['landscape @page kept on this route only', /usePrintPage\("landscape"/],
     ['audit-print scope kept', /audit-print/],
-    ['initialTab / seedFresh props for the step machine', /initialTab[\s\S]*seedFresh/],
+    ['tab / seedFresh props for the step machine', /tab:\s*AuditTab;[\s\S]*seedFresh\?:\s*FreshPara\[\]/],
 ].forEach(([label, re]) => check(`AuditWorkspace: ${label}`, re.test(pageSrc)));
 
 // ── 3a. AuditReply step machine (landing → upload → workspace) ────────────────

@@ -4,6 +4,14 @@ import { useLocation } from "wouter";
 const TOOLS = [
   // ── Priority tools (pinned first) ─────────────────────────────────────
   {
+    id: "ifms-3-bill-input",
+    icon: "🧾",
+    name: "IFMS 3.0 BILL INPUT",
+    description: "कम विवरणों से बिल कटौतियाँ, मद वार विभाजन तथा पीडीएफ व चित्र डाउनलोड करें",
+    htmlFile: null,
+    directPath: "/ifms-3-bill-input",
+  },
+  {
     id: "hindi-bill-note-sheet",
     icon: "📄",
     name: "Hindi Bill Note Sheet",

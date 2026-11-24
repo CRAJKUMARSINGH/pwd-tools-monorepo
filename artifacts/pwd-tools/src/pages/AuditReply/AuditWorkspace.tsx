@@ -12,7 +12,6 @@
  * `audit-print` print scope are unchanged — the smoke harnesses pin them.
  */
 import { CASES } from "@/data/audit-cases";
-import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { useFreshParas, type FreshPara } from "@/hooks/useFreshParas";
 import { generateDocx } from "@/lib/generate-docx";
 import { generateFreshDocx } from "@/lib/generate-fresh-docx";
@@ -154,7 +153,7 @@ function HindiTextarea({ value, onChange, placeholder, bgClass }:
 // ─────────────────────────────────────────────────────────────────────────────
 function InlineInsertForm({ afterIndex, onAdd, onCancel }:
   { afterIndex: number; onAdd: (row: CaseEntry, after: number) => void; onCancel: () => void }) {
-  const [form, setForm] = useState<CaseEntry>({ no: `new-${Date.now()}`, header: '', gist: '', resp: '', obs: '' });
+  const [form, setForm] = useState<CaseEntry>(() => ({ no: `new-${Date.now()}`, header: '', gist: '', resp: '', obs: '' }));
   function set(k: keyof CaseEntry, v: string) { setForm(p => ({ ...p, [k]: v })); }
   const cls = 'w-full border border-border rounded px-2 py-1.5 text-xs bg-background resize-none outline-none focus:ring-1 focus:ring-primary';
 
@@ -684,57 +683,46 @@ function FreshParasTab({ store }: { store: FreshStore }) {
 // ─────────────────────────────────────────────────────────────────────────────
 // Root page
 // ─────────────────────────────────────────────────────────────────────────────
+const tabs: { id: AuditTab; label: string; sub: string }[] = [
+  { id: "existing", label: "📂 Existing Paras", sub: `${CASES.length} paras` },
+  { id: "fresh", label: "🆕 Fresh Para Entry", sub: "upload + fill" },
+];
+
+export function AuditWorkspaceTabs({ tab, onChange }: { tab: AuditTab; onChange: (tab: AuditTab) => void }) {
+  return (
+    <div className="flex border-b border-border bg-card">
+      {tabs.map(({ id, label, sub }) => (
+        <button
+          key={id}
+          type="button"
+          aria-pressed={tab === id}
+          onClick={() => onChange(id)}
+          className={`flex flex-col items-start px-6 py-2.5 border-b-2 transition-colors text-left ${tab === id
+            ? "border-primary text-primary font-semibold"
+            : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+        >
+          <span className="text-sm">{label}</span>
+          <span className="text-[10px] opacity-70">{sub}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
 type Props = {
-  /** Which tab the workspace opens on. */
-  initialTab?: AuditTab;
-  /** Fresh paras handed over by the upload step. Images are in-memory only. */
+  tab: AuditTab;
   seedFresh?: FreshPara[];
-  /** Return to the audit landing step (rendered by `AuditReply/index.tsx`). */
-  onExit?: () => void;
 };
 
-export default function AuditWorkspace({ initialTab = "existing", seedFresh, onExit }: Props) {
-  const [tab, setTab] = useState<AuditTab>(initialTab);
-  // Owned here (not inside the tab) so a tab switch cannot remount the hook and
-  // re-apply `seedFresh` over the user's edits, or lose their in-memory images.
+export default function AuditWorkspace({ tab, seedFresh }: Props) {
   const freshStore = useFreshParas(seedFresh);
-
-  useDocumentTitle("Audit Reply — जिला प्रभाग II उदयपुर");
-  // Audit tables are wide: restore the A4 landscape @page that the app-wide
-  // print fix removed (E-02). Scoped to this route only. The issuing footer is
-  // passed explicitly — every other route now prints with no margin box.
   usePrintPage("landscape", "DRAFTED BY PRIYANKA JAIN, PWD UDAIPUR");
 
   return (
-    <div className="audit-print min-h-screen bg-background text-foreground flex flex-col font-sans">
-      {/* ── Tab bar ──────────────────────────────────────────────────── */}
-      {/* top-[41px]: accounts for the single combined header in AuditReplyPage (≈41px). */}
-      <div className="flex border-b border-border bg-card sticky top-[41px] z-10 print:hidden">
-        {(
-          [
-            { id: "existing", label: "📂 Existing Paras", sub: `${CASES.length} paras` },
-            { id: "fresh", label: "🆕 Fresh Para Entry", sub: "upload + fill" },
-          ] as { id: AuditTab; label: string; sub: string }[]
-        ).map(t => (
-          <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
-            className={`flex flex-col items-start px-6 py-2.5 border-b-2 transition-colors text-left ${tab === t.id
-              ? "border-primary text-primary font-semibold"
-              : "border-transparent text-muted-foreground hover:text-foreground"
-              }`}
-          >
-            <span className="text-sm">{t.label}</span>
-            <span className="text-[10px] opacity-70">{t.sub}</span>
-          </button>
-        ))}
-      </div>
-
-      {/* ── Tab content ──────────────────────────────────────────────── */}
-      <main className="flex-1 overflow-auto">
-        {tab === "existing" && <ExistingParasTab />}
-        {tab === "fresh" && <FreshParasTab store={freshStore} />}
-      </main>
+    <div className="audit-print min-h-screen bg-background text-foreground font-sans">
+      {tab === "existing" && <ExistingParasTab />}
+      {tab === "fresh" && <FreshParasTab store={freshStore} />}
     </div>
   );
 }

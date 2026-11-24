@@ -12,6 +12,7 @@ import EnrollmentDataForm from "@/pages/EnrollmentDataForm";
 import EotLetterPage from "@/pages/EotLetterPage";
 import ExcelToEmd from "@/pages/ExcelToEmd";
 import Home from "@/pages/Home";
+import Ifms30BillInput from "@/pages/Ifms30BillInput";
 import ImageCompressor from "@/pages/ImageCompressor";
 import LegalCorrespondencePage from "@/pages/LegalCorrespondence";
 import NoDuesPage from "@/pages/NoDuesPage";
@@ -40,6 +41,7 @@ function Router() {
         <Route path="/correspondence" component={CorrespondencePage} />
         <Route path="/legal-correspondence" component={LegalCorrespondencePage} />
         {/* ── Bill & Financial ── */}
+        <Route path="/ifms-3-bill-input" component={Ifms30BillInput} />
         <Route path="/bill-form" component={() => <BillForm />} />
         <Route path="/speed-money-tool" component={SpeedMoneyTool} />
         <Route path="/excel-to-emd" component={ExcelToEmd} />

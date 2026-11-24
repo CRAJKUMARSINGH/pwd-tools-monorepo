@@ -7,17 +7,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
-
-      # Smoke tests run on source files directly — no install needed.
+          cache: pnpm
+      - name: Install frontend and smoke-test dependencies
+        run: pnpm --filter '@workspace/pwd-tools...' --filter '@workspace/scripts' install --frozen-lockfile --prod=false
+      - name: Build pwd-tools
+        run: pnpm --filter @workspace/pwd-tools build
       - name: Smoke tests
-        run: |
-          node scripts/tests/smoketest-print.mjs
-          node scripts/tests/smoketest-navigation.mjs
-          node scripts/tests/smoketest-audit.mjs
-          node scripts/tests/smoketest-gps.mjs
-          node scripts/tests/smoketest-bankletter.mjs
-          node scripts/tests/smoketest-transliteration.mjs
+        run: pnpm --filter @workspace/scripts test:smoke

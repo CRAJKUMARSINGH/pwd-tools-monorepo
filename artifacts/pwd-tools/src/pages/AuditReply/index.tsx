@@ -1,12 +1,11 @@
 import ToolShell from "@/components/ToolShell";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import type { FreshPara } from "@/hooks/useFreshParas";
-import { ArrowLeft, FileText } from "lucide-react";
+import { FileText } from "lucide-react";
 import { useState } from "react";
-import { useLocation } from "wouter";
 import AuditLanding from "./AuditLanding";
 import AuditUploadStep from "./AuditUploadStep";
-import AuditWorkspace from "./AuditWorkspace";
+import AuditWorkspace, { AuditWorkspaceTabs } from "./AuditWorkspace";
 import type { AuditStep, AuditTab, UploadedInput } from "./types";
 
 const REPLIES_KEY = "audit-reply-data";
@@ -68,36 +67,24 @@ function toFreshParas(inputs: UploadedInput[]): FreshPara[] {
  */
 export default function AuditReplyPage() {
   useDocumentTitle("Audit Reply — जिला प्रभाग II उदयपुर");
-  const [, navigate] = useLocation();
   const [step, setStep] = useState<AuditStep>("landing");
   const [tab, setTab] = useState<AuditTab>("existing");
   const [seedFresh, setSeedFresh] = useState<FreshPara[] | undefined>(undefined);
   const [draft, setDraft] = useState<DraftSummary>(readDraftSummary);
 
-  // Workspace is full-screen. We render ONE authoritative sticky header here
-  // so there is never a competing header inside AuditWorkspace fighting for
-  // top-0 — that was the root cause of the Back-to-Home bar being obscured.
-  if (step === "workspace") {
-    const handleExit = () => {
-      setDraft(readDraftSummary());
-      setStep("landing");
-    };
-    return (
-      <>
-        {/* ── Single combined sticky header — Back to Home + Menu ── */}
-        <header
-          className="hide-on-print sticky top-0 z-40 flex items-center gap-2 border-b bg-primary px-3 py-2 text-primary-foreground shadow-md"
-          style={{ minHeight: "41px" }}
-        >
-          <button
-            type="button"
-            onClick={() => navigate("/home")}
-            aria-label="Back to Home"
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-primary-foreground/40 bg-white/15 px-3 py-1.5 text-xs font-bold transition-colors hover:bg-white/30 active:bg-white/40"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
-            ← Back to Home
-          </button>
+  const handleExit = () => {
+    setDraft(readDraftSummary());
+    setStep("landing");
+  };
+  const inWorkspace = step === "workspace";
+
+  return (
+    <ToolShell
+      title="अंकेक्षण प्रतिवेदन उत्तर"
+      subtitle="Audit Reply Tool — जिला प्रभाग II, उदयपुर"
+      toolbar={inWorkspace && <AuditWorkspaceTabs tab={tab} onChange={setTab} />}
+      actions={
+        inWorkspace && (
           <button
             type="button"
             onClick={handleExit}
@@ -108,25 +95,12 @@ export default function AuditReplyPage() {
             <FileText className="h-3.5 w-3.5" aria-hidden="true" />
             Menu
           </button>
-          <span className="truncate text-xs font-semibold opacity-80">
-            Audit Reply — जिला प्रभाग II, उदयपुर
-          </span>
-        </header>
-        <AuditWorkspace
-          initialTab={tab}
-          seedFresh={seedFresh}
-          onExit={handleExit}
-        />
-      </>
-    );
-  }
-
-  return (
-    <ToolShell
-      title="अंकेक्षण प्रतिवेदन उत्तर"
-      subtitle="Audit Reply Tool — जिला प्रभाग II, उदयपुर"
+        )
+      }
     >
-      {step === "upload" ? (
+      {inWorkspace ? (
+        <AuditWorkspace tab={tab} seedFresh={seedFresh} />
+      ) : step === "upload" ? (
         <AuditUploadStep
           onBack={() => setStep("landing")}
           onDone={(inputs) => {
