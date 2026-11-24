@@ -1,14 +1,12 @@
 [build]
-  # Run from monorepo root so workspace:* packages resolve correctly
+  # Pre-built dist is committed — no build step needed.
+  # Netlify simply serves the already-compiled files.
   base    = "."
-  command = "pnpm install --no-frozen-lockfile && cd artifacts/pwd-tools && npx vite build --config vite.config.ts"
+  command = ""
   publish = "artifacts/pwd-tools/dist/public"
 
 [build.environment]
-  PORT         = "3000"
-  BASE_PATH    = "/"
-  NODE_ENV     = "production"
-  PNPM_VERSION = "10.33.0"
+  NODE_ENV = "production"
 
 [[redirects]]
   from   = "/*"

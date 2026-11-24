@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bill Generator</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .btn-online {
+            display: inline-block;
+            padding: 22px 56px;
+            font-size: 22px;
+            font-weight: 700;
+            color: #fff;
+            background: linear-gradient(90deg, #f7971e, #ffd200, #f7971e);
+            background-size: 200% auto;
+            border: none;
+            border-radius: 50px;
+            text-decoration: none;
+            letter-spacing: 1px;
+            box-shadow: 0 8px 32px rgba(247, 151, 30, 0.45), 0 2px 8px rgba(0,0,0,0.3);
+            animation: shine 2.5s linear infinite, pulse 2s ease-in-out infinite;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn-online:hover {
+            transform: scale(1.07);
+            box-shadow: 0 12px 40px rgba(247, 151, 30, 0.65);
+        }
+
+        @keyframes shine {
+            to { background-position: 200% center; }
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 8px 32px rgba(247, 151, 30, 0.45); }
+            50%       { box-shadow: 0 8px 48px rgba(255, 210, 0, 0.75); }
+        }
+    </style>
+</head>
+<body>
+    <a class="btn-online" href="https://bill-priyanka-online.streamlit.app/" target="_blank">
+        🚀 Bill Generator (Online)
+    </a>
+</body>
+</html>

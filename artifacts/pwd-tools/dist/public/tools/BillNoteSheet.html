@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="hi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>बिल नोट शीट जेनरेटर (हिन्दी)</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2980b9;
+            --error-color: #e74c3c;
+            --success-color: #2ecc71;
+            --border-color: #ddd;
+            --text-color: #333;
+            --light-bg: #f9f9f9;
+        }
+
+        body {
+            font-family: 'Mangal', 'Nirmala UI', 'Noto Sans Devanagari', sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        h2 {
+            color: var(--primary-color);
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--primary-color);
+        }
+
+        .form-container {
+            background-color: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        input,
+        select,
+        button {
+            font-family: 'Mangal', 'Nirmala UI', 'Noto Sans Devanagari', sans-serif;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 16px;
+            transition: border 0.3s;
+            box-sizing: border-box;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+
+        input[type="date"] {
+            width: calc(50% - 10px);
+            display: inline-block;
+        }
+
+        input[type="text"][readonly] {
+            width: calc(50% - 10px);
+            display: inline-block;
+            margin-left: 10px;
+            background-color: #f9f9f9;
+        }
+
+        .required:after {
+            content: " *";
+            color: var(--error-color);
+        }
+
+        .error-message {
+            color: var(--error-color);
+            font-size: 0.85em;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin: 25px 0;
+        }
+
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            flex: 1;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .btn-secondary {
+            background-color: #95a5a6;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #7f8c8d;
+        }
+
+        #output {
+            background-color: var(--light-bg);
+            border: 1px solid var(--border-color);
+            padding: 20mm;
+            border-radius: 4px;
+            font-family: 'Mangal', 'Nirmala UI', 'Noto Sans Devanagari', sans-serif;
+            margin-top: 20px;
+            width: 210mm;
+            box-sizing: border-box;
+            font-size: 11pt;
+            line-height: 1.3;
+        }
+
+        #outputText {
+            max-width: 170mm;
+            max-height: 257mm;
+            overflow-wrap: break-word;
+            word-break: normal;
+            line-break: auto;
+            hyphens: none;
+            display: block;
+            white-space: pre-wrap;
+            margin: 0;
+        }
+
+        #outputText p {
+            margin: 0 0 0.5em 0;
+        }
+
+        .section-title {
+            font-weight: bold;
+            color: var(--primary-color);
+            margin: 25px 0 15px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .conditional-field,
+        .final-only {
+            display: none;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border-radius: 5px;
+            width: 80%;
+            max-width: 400px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+
+        .modal-btn {
+            padding: 8px 16px;
+            margin: 0 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        @media print {
+            @page {
+                margin: 0;
+            }
+
+            body * {
+                visibility: hidden;
+            }
+
+            #output,
+            #output * {
+                visibility: visible;
+            }
+
+            #output {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 210mm;
+                min-height: 297mm;
+                border: none;
+                background: white;
+                padding: 20mm;
+                margin: 0;
+                box-sizing: border-box;
+            }
+
+            #outputText {
+                max-width: 170mm;
+                max-height: none;
+                overflow-wrap: break-word;
+                word-break: normal;
+                line-break: auto;
+                hyphens: none;
+                page-break-inside: auto;
+                break-before: auto;
+                break-after: auto;
+            }
+
+            #outputText p {
+                margin: 0 0 0.5em 0;
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="form-container">
+        <h2>बिल नोट शीट जेनरेटर (हिन्दी)</h2>
+
+        <div class="section-title">बिल प्रकार</div>
+        <div class="form-group">
+            <label for="billType" class="required">बिल का प्रकार</label>
+            <select id="billType" required>
+                <option value="" disabled selected>चुनें...</option>
+                <option value="running">रनिंग बिल</option>
+                <option value="final">फाइनल बिल</option>
+            </select>
+            <div id="billTypeError" class="error-message">कृपया बिल का प्रकार चुनें</div>
+        </div>
+
+        <div class="section-title">मूल जानकारी</div>
+        <div class="form-group">
+            <label for="workOrderAmount" class="required">वर्क ऑर्डर राशि (₹)</label>
+            <input type="number" id="workOrderAmount" min="0" step="0.01" required>
+            <div id="workOrderAmountError" class="error-message">कृपया मान्य राशि दर्ज करें</div>
+        </div>
+
+        <div class="form-group">
+            <label for="uptoDateBillAmount" class="required">अब तक (Upto Date) की बिल राशि (₹)</label>
+            <input type="number" id="uptoDateBillAmount" min="0" step="0.01" required>
+            <div id="uptoDateBillAmountError" class="error-message">कृपया मान्य राशि दर्ज करें</div>
+        </div>
+
+        <div class="section-title final-only">परियोजना समयरेखा</div>
+        <div class="form-group final-only">
+            <label for="startDate" class="required">प्रारंभ तिथि (DD/MM/YYYY)</label>
+            <input type="date" id="startDatePicker">
+            <input type="text" id="startDate" readonly placeholder="DD/MM/YYYY">
+            <div id="startDateError" class="error-message">कृपया DD/MM/YYYY प्रारूप में मान्य तिथि चुनें</div>
+        </div>
+
+        <div class="form-group final-only">
+            <label for="scheduleCompletion" class="required">निर्धारित समापन तिथि (DD/MM/YYYY)</label>
+            <input type="date" id="scheduleCompletionPicker">
+            <input type="text" id="scheduleCompletion" readonly placeholder="DD/MM/YYYY">
+            <div id="scheduleCompletionError" class="error-message">कृपया DD/MM/YYYY प्रारूप में मान्य तिथि चुनें</div>
+        </div>
+
+        <div class="form-group final-only">
+            <label for="actualCompletion" class="required">वास्तविक समापन तिथि (DD/MM/YYYY)</label>
+            <input type="date" id="actualCompletionPicker">
+            <input type="text" id="actualCompletion" readonly placeholder="DD/MM/YYYY">
+            <div id="actualCompletionError" class="error-message">कृपया DD/MM/YYYY प्रारूप में मान्य तिथि चुनें</div>
+        </div>
+
+        <div class="section-title">कार्य विवरण</div>
+        <div class="form-group final-only">
+            <label for="repairWork">मरम्मत कार्य</label>
+            <select id="repairWork">
+                <option value="No" selected>नहीं</option>
+                <option value="Yes">हाँ</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="extraItem">Extra Items (Extra Item) शामिल</label>
+            <select id="extraItem">
+                <option value="No" selected>नहीं</option>
+                <option value="Yes">हाँ</option>
+            </select>
+        </div>
+
+        <div class="form-group conditional-field" id="extraItemAmountGroup">
+            <label for="extraItemAmount">Extra Items राशि (₹)</label>
+            <input type="number" id="extraItemAmount" min="0" step="0.01" value="0">
+            <div id="extraItemAmountError" class="error-message">कृपया मान्य राशि दर्ज करें</div>
+        </div>
+
+        <div class="form-group final-only">
+            <label for="excessQuantity">अधिक मात्रा (Excess Quantity)</label>
+            <select id="excessQuantity">
+                <option value="No" selected>नहीं</option>
+                <option value="Yes">हाँ</option>
+            </select>
+        </div>
+
+        <div class="form-group final-only">
+            <label for="delayComment">बिल देर से जमा (>6 माह)</label>
+            <select id="delayComment">
+                <option value="No" selected>नहीं</option>
+                <option value="Yes">हाँ</option>
+            </select>
+        </div>
+
+        <div class="button-group">
+            <button class="btn-primary" id="generateBtn" onclick="generateNote()">नोट शीट जनरेट करें</button>
+            <button class="btn-secondary" id="resetBtn" onclick="resetForm()">फॉर्म रीसेट करें</button>
+        </div>
+
+        <div id="output" style="display: none;">
+            <div class="section-title">जनरेटेड नोट</div>
+            <div id="outputText">फॉर्म भरें और "नोट शीट जनरेट करें" पर क्लिक करें।</div>
+            <div class="button-group" id="actionButtons" style="display: none;">
+                <button class="btn-primary" id="printBtn" onclick="printNote()">नोट प्रिंट करें</button>
+                <button class="btn-secondary" id="copyBtn" onclick="copyToClipboard()">क्लिपबोर्ड पर कॉपी करें</button>
+            </div>
+        </div>
+
+        <div id="alertModal" class="modal">
+            <div class="modal-content">
+                <p id="modalMessage">यह एक मॉडल संदेश है</p>
+                <div class="modal-buttons">
+                    <button class="modal-btn" onclick="closeModal()">ठीक है</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const billTypeSelect = document.getElementById('billType');
+        const extraItemSelect = document.getElementById('extraItem');
+        const extraItemAmountGroup = document.getElementById('extraItemAmountGroup');
+        const outputElement = document.getElementById('output');
+        const outputText = document.getElementById('outputText');
+        const actionButtons = document.getElementById('actionButtons');
+        const finalOnlyFields = document.querySelectorAll('.final-only');
+        const startDatePicker = document.getElementById('startDatePicker');
+        const startDateInput = document.getElementById('startDate');
+        const scheduleCompletionPicker = document.getElementById('scheduleCompletionPicker');
+        const scheduleCompletionInput = document.getElementById('scheduleCompletion');
+        const actualCompletionPicker = document.getElementById('actualCompletionPicker');
+        const actualCompletionInput = document.getElementById('actualCompletion');
+
+        // Show/hide fields based on bill type
+        billTypeSelect.addEventListener('change', function () {
+            const isFinal = this.value === 'final';
+            finalOnlyFields.forEach(field => {
+                field.style.display = isFinal ? 'block' : 'none';
+            });
+        });
+
+        // Show/hide extra item amount field
+        extraItemSelect.addEventListener('change', function () {
+            extraItemAmountGroup.style.display = this.value === 'Yes' ? 'block' : 'none';
+        });
+
+        // Date formatting function: YYYY-MM-DD to DD/MM/YYYY
+        function formatDateToDDMMYYYY(dateStr) {
+            if (!dateStr) return '';
+            const [year, month, day] = dateStr.split('-');
+            return `${day}/${month}/${year}`;
+        }
+
+        // Date parsing function: DD/MM/YYYY or YYYY-MM-DD to Date object
+        function parseDate(dateStr) {
+            let day, month, year;
+            if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+                // Handle YYYY-MM-DD
+                [year, month, day] = dateStr.split('-').map(Number);
+                month -= 1; // Months are 0-based
+            } else if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) {
+                // Handle DD/MM/YYYY
+                [day, month, year] = dateStr.split('/').map(Number);
+                month -= 1; // Months are 0-based
+            } else {
+                return null;
+            }
+            const date = new Date(year, month, day);
+            // Validate date
+            if (date.getDate() !== day || date.getMonth() !== month || date.getFullYear() !== year) {
+                return null;
+            }
+            return date;
+        }
+
+        // Update text input when date picker changes
+        function updateDateInput(picker, input) {
+            picker.addEventListener('change', function () {
+                input.value = formatDateToDDMMYYYY(this.value);
+            });
+        }
+
+        // Bind date pickers to text inputs
+        updateDateInput(startDatePicker, startDateInput);
+        updateDateInput(scheduleCompletionPicker, scheduleCompletionInput);
+        updateDateInput(actualCompletionPicker, actualCompletionInput);
+
+        // Modal functions
+        function showModal(message) {
+            document.getElementById('modalMessage').textContent = message;
+            document.getElementById('alertModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('alertModal').style.display = 'none';
+        }
+
+        // Form validation
+        function validateForm() {
+            let isValid = true;
+            const billType = billTypeSelect.value;
+            const requiredFields = billType === 'final' ? [
+                'billType', 'workOrderAmount', 'uptoDateBillAmount',
+                'startDate', 'scheduleCompletion', 'actualCompletion'
+            ] : ['billType', 'workOrderAmount', 'uptoDateBillAmount'];
+
+            // Clear previous errors
+            document.querySelectorAll('.error-message').forEach(el => el.style.display = 'none');
+
+            // Validate required fields
+            const missingFields = [];
+            requiredFields.forEach(fieldId => {
+                const field = document.getElementById(fieldId);
+                if (!field.value.trim()) {
+                    document.getElementById(`${fieldId}Error`).style.display = 'block';
+                    missingFields.push(field.previousElementSibling.textContent.replace(' *', ''));
+                    isValid = false;
+                }
+            });
+
+            if (missingFields.length > 0) {
+                showModal(`कृपया सभी आवश्यक फ़ील्ड भरें:\n${missingFields.join('\n')}`);
+                return false;
+            }
+
+            // Validate amounts
+            const workOrderAmount = parseFloat(document.getElementById('workOrderAmount').value);
+            const uptoDateBillAmount = parseFloat(document.getElementById('uptoDateBillAmount').value);
+
+            if (isNaN(workOrderAmount) || workOrderAmount <= 0) {
+                document.getElementById('workOrderAmountError').textContent = 'राशि 0 से अधिक होनी चाहिए';
+                document.getElementById('workOrderAmountError').style.display = 'block';
+                showModal('वर्क ऑर्डर राशि 0 से अधिक होनी चाहिए');
+                isValid = false;
+            }
+
+            if (isNaN(uptoDateBillAmount) || uptoDateBillAmount < 0) {
+                document.getElementById('uptoDateBillAmountError').textContent = 'राशि नकारात्मक नहीं हो सकती';
+                document.getElementById('uptoDateBillAmountError').style.display = 'block';
+                showModal('अब तक की बिल राशि नकारात्मक नहीं हो सकती');
+                isValid = false;
+            }
+
+            // Validate dates for final bill
+            if (billType === 'final') {
+                const startDateStr = startDateInput.value;
+                const scheduleDateStr = scheduleCompletionInput.value;
+                const actualDateStr = actualCompletionInput.value;
+
+                const startDate = parseDate(startDateStr);
+                const scheduleDate = parseDate(scheduleDateStr);
+                const actualDate = parseDate(actualDateStr);
+
+                if (!startDate || !scheduleDate || !actualDate) {
+                    if (!startDate) document.getElementById('startDateError').style.display = 'block';
+                    if (!scheduleDate) document.getElementById('scheduleCompletionError').style.display = 'block';
+                    if (!actualDate) document.getElementById('actualCompletionError').style.display = 'block';
+                    showModal('कृपया DD/MM/YYYY प्रारूप में मान्य तिथियाँ चुनें');
+                    isValid = false;
+                } else if (startDate > scheduleDate) {
+                    document.getElementById('scheduleCompletionError').style.display = 'block';
+                    showModal('निर्धारित समापन तिथि प्रारंभ तिथि के बाद होनी चाहिए');
+                    isValid = false;
+                } else if (actualDate < startDate) {
+                    document.getElementById('actualCompletionError').style.display = 'block';
+                    showModal('वास्तविक समापन तिथि प्रारंभ तिथि के बाद होनी चाहिए');
+                    isValid = false;
+                }
+            }
+
+            return isValid;
+        }
+
+        // Generate the note
+        function generateNote() {
+            if (!validateForm()) {
+                return;
+            }
+
+            // Get form values
+            const billType = billTypeSelect.value;
+            const workOrderAmount = parseFloat(document.getElementById('workOrderAmount').value);
+            const uptoDateBillAmount = parseFloat(document.getElementById('uptoDateBillAmount').value);
+            const extraItem = extraItemSelect.value;
+            const extraItemAmount = parseFloat(document.getElementById('extraItemAmount').value) || 0;
+
+            // Calculate percentage
+            const percentageWorkDone = (uptoDateBillAmount / workOrderAmount) * 100;
+
+            // Generate note
+            let note = '';
+            let serialNumber = 1;
+
+            if (billType === 'running') {
+                note += `${serialNumber++}. इस Stage में कार्य ${percentageWorkDone.toFixed(2)}% संपादित हुआ है।\n`;
+                note += `${serialNumber++}. कार्य प्रगति पर है।\n`;
+                if (extraItem === 'Yes') {
+                    const extraItemPercentage = (extraItemAmount / workOrderAmount) * 100;
+                    if (extraItemPercentage > 5) {
+                        note += `${serialNumber++}. ₹${extraItemAmount.toFixed(2)} की Extra Items कार्यान्वित किए गए हैं, जो वर्क ऑर्डर राशि का ${extraItemPercentage.toFixed(2)}% है, जो 5% से अधिक है। जिसकी स्वीकृति Superintending Engineer, PWD Rural circle कार्यालय के क्षेत्राधिकार में है।\n`;
+                    } else if (extraItemPercentage === 5) {
+                        note += `${serialNumber++}. ₹${extraItemAmount.toFixed(2)} की Extra Items कार्यान्वित किए गए हैं, जो वर्क ऑर्डर राशि का ${extraItemPercentage.toFixed(2)}% है, जो 5% के बराबर है। जिसकी स्वीकृति इस कार्यालय के क्षेत्राधिकार में है।\n`;
+                    } else {
+                        note += `${serialNumber++}. ₹${extraItemAmount.toFixed(2)} की Extra Items कार्यान्वित किए गए हैं, जो वर्क ऑर्डर राशि का ${extraItemPercentage.toFixed(2)}% है, जो 5% से कम है। जिसकी स्वीकृति इस कार्यालय के क्षेत्राधिकार में है।\n`;
+                    }
+                }
+                note += `${serialNumber++}. उपरोक्त विवरण के सन्दर्भ में समुचित निर्णय हेतु प्रस्तुत है।`;
+            } else {
+                const startDate = parseDate(startDateInput.value);
+                const scheduleCompletion = parseDate(scheduleCompletionInput.value);
+                const actualCompletion = parseDate(actualCompletionInput.value);
+                const repairWork = document.getElementById('repairWork').value;
+                const excessQuantity = document.getElementById('excessQuantity').value;
+                const delayComment = document.getElementById('delayComment').value;
+
+                note += `${serialNumber++}. कार्य ${percentageWorkDone.toFixed(2)}% पूर्ण हुआ है।\n`;
+                if (percentageWorkDone < 90) {
+                    note += `${serialNumber}. कार्य का वांछित Deviation Statement भी स्वीकृति हेतु प्राप्त हुआ है, जिसकी स्वीकृति इसी कार्यालय के क्षेत्राधिकार में निहित है।\n`;
+                    serialNumber++;
+                } else if (percentageWorkDone > 100) {
+                    note += `${serialNumber}. कार्य का वांछित Deviation Statement भी स्वीकृति हेतु प्राप्त हुआ है, OVERALL EXCESS वर्क आर्डर राशि के 5% से कम/बराबर है जिसकी स्वीकृति इसी कार्यालय के क्षेत्राधिकार में निहित है।\n`;
+                    serialNumber++;
+                }
+
+                let delayDays = Math.floor((actualCompletion - scheduleCompletion) / (1000 * 60 * 60 * 24));
+                if (actualCompletion > scheduleCompletion) {
+                    note += `${serialNumber}. कार्य में ${delayDays} दिन की देरी हुई है।\n`;
+                    serialNumber++;
+                    let scheduleDuration = Math.floor((scheduleCompletion - startDate) / (1000 * 60 * 60 * 24));
+                    if (delayDays > (scheduleDuration / 2 + 1)) {
+                        note += `${serialNumber}. Time Extension केस Superintending Engineer, PWD Rural circle कार्यालय द्वारा अनुमोदित किया जाना है।\n`;
+                    } else {
+                        note += `${serialNumber}. Time Extension केस इस कार्यालय द्वारा अनुमोदित किया जाना है।\n`;
+                    }
+                    serialNumber++;
+                } else {
+                    note += `${serialNumber}. कार्य समय पर संपादित हुआ है।\n`;
+                    serialNumber++;
+                }
+
+                if (extraItem === 'Yes') {
+                    const extraItemPercentage = (extraItemAmount / workOrderAmount) * 100;
+                    if (extraItemPercentage > 5) {
+                        note += `${serialNumber++}. ₹${extraItemAmount.toFixed(2)} की Extra Items कार्यान्वित किए गए हैं, जो वर्क ऑर्डर राशि का ${extraItemPercentage.toFixed(2)}% है, जो 5% से अधिक है। जिसकी स्वीकृति Superintending Engineer, PWD Rural circle कार्यालय के क्षेत्राधिकार में है।\n`;
+                    } else if (extraItemPercentage === 5) {
+                        note += `${serialNumber++}. ₹${extraItemAmount.toFixed(2)} की Extra Items कार्यान्वित किए गए हैं, जो वर्क ऑर्डर राशि का ${extraItemPercentage.toFixed(2)}% है, अथवा (5% के बराबर है)। जिसकी स्वीकृति इस कार्यालय के क्षेत्राधिकार में है।\n`;
+                    } else {
+                        note += `${serialNumber++}. ₹${extraItemAmount.toFixed(2)} की Extra Items कार्यान्वित किए गए हैं, जो वर्क ऑर्डर राशि का ${extraItemPercentage.toFixed(2)}% है, जो 5% से कम है। जिसकी स्वीकृति इस कार्यालय के क्षेत्राधिकार में है।\n`;
+                    }
+                }
+
+                if (excessQuantity === 'Yes') {
+                    note += `${serialNumber++}. Work Order के कुछ आइटम में अतिरिक्त मात्रा (Excess Quantity) संपादित की गई है।  इसके लिए Deviation Statement भी स्वीकृति हेतु प्राप्त हुआ है ।\n`;
+                }
+
+                note += `${serialNumber}. गुणवत्ता नियंत्रण (Q.C.) परीक्षण रिपोर्ट (Test Reports) संलग्न हैं।\n`;
+                serialNumber++;
+
+                if (repairWork === "No") {
+                    note += `${serialNumber}. हस्तांतरण विवरण Hand Over Statement संलग्न है।\n`;
+                    serialNumber++;
+                }
+
+                if (delayComment === "Yes") {
+                    note += `${serialNumber}. कार्य समाप्ति के करीब 6 महीने बाद फाइनल बिल इस कार्यालय में प्रस्तुत किया गया है। इस अप्रत्याशित देरी के लिए सहायक अभियंता से स्पष्टीकरण मांगा जाए, ऐसी प्रस्तावना है।\n`;
+                    serialNumber++;
+                }
+
+                note += `${serialNumber++}. उचित निर्णय के लिए उपर्युक्त विवरण संलग्न है।`;
+            }
+
+            // Display output
+            outputText.textContent = note;
+            outputElement.style.display = 'block';
+            actionButtons.style.display = 'flex';
+            outputElement.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Reset form
+        function resetForm() {
+            document.querySelectorAll('input, select').forEach(element => {
+                if (element.type !== 'button') {
+                    element.value = element.tagName === 'SELECT' ? element.options[0].value : '';
+                }
+            });
+            outputText.textContent = 'फॉर्म भरें और "नोट शीट जनरेट करें" पर क्लिक करें।';
+            outputElement.style.display = 'none';
+            actionButtons.style.display = 'none';
+            document.querySelectorAll('.error-message').forEach(el => el.style.display = 'none');
+            extraItemAmountGroup.style.display = 'none';
+            finalOnlyFields.forEach(field => field.style.display = 'none');
+        }
+
+        // Print note
+        function printNote() {
+            window.print();
+        }
+
+        // Copy to clipboard
+        function copyToClipboard() {
+            const noteText = outputText.textContent;
+            navigator.clipboard.writeText(noteText).then(() => {
+                showModal('नोट क्लिपबोर्ड पर कॉपी किया गया!');
+            }).catch(err => {
+                showModal('नोट कॉपी करने में विफल: ' + err);
+            });
+        }
+
+        // Bind buttons to functions
+        document.getElementById('generateBtn').addEventListener('click', generateNote);
+        document.getElementById('resetBtn').addEventListener('click', resetForm);
+        document.getElementById('printBtn').addEventListener('click', printNote);
+        document.getElementById('copyBtn').addEventListener('click', copyToClipboard);
+
+        // Close modal when clicking outside
+        window.onclick = function (event) {
+            const modal = document.getElementById('alertModal');
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+
+</html>

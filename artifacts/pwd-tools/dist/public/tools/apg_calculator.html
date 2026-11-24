@@ -1,0 +1,230 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>APS Calculator</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 420px;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 1.8em;
+        }
+        p.subtitle {
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 0.95em;
+            margin-bottom: 25px;
+        }
+        .back-btn {
+            background: #95a5a6;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .back-btn {
+            background: #95a5a6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .back-btn:hover {
+            background: #7f8c8d;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(149, 165, 166, 0.3);
+        }
+        label {
+            display: block;
+            margin: 15px 0 6px;
+            font-weight: 600;
+            color: #34495e;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border 0.3s;
+        }
+        input:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+        button {
+            margin-top: 25px;
+            width: 100%;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: center;
+        }
+        button:hover {
+            background: linear-gradient(135deg, #764ba2, #667eea);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e8f4fc;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #2c3e50;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .example {
+            margin-top: 25px;
+            font-size: 0.9em;
+            color: #7f8c8d;
+            text-align: center;
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #95a5a6;
+            font-size: 0.8em;
+        }
+        .footer a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="../app.py" class="back-btn">
+            ΓåÉ Back to Home
+        </a>
+        <h1>≡ƒº« APG Calculator</h1>
+        <p class="subtitle">50% of savings beyond -15% below G-Schedule</p>
+
+        <label for="gsAmount">G-Schedule Amount (Γé╣)</label>
+        <input type="number" id="gsAmount" step="0.01" placeholder="e.g. 100.00" required>
+
+        <label for="woAmount">Work Order Amount (Γé╣)</label>
+        <input type="number" id="woAmount" step="0.01" placeholder="e.g. 80.00" required>
+
+        <button id="calcBtn">
+            <span>≡ƒº«</span> Calculate APS
+        </button>
+
+        <div id="result">Enter values to calculate APS</div>
+
+        <div class="example">
+            <strong>Example:</strong> G-Schedule = 100, Work Order = 80<br>
+            ΓåÆ -20% (5% below -15%) ΓåÆ 5% of 100 = 5 ΓåÆ APS = <strong>2.50</strong>
+        </div>
+
+        <div class="footer">
+            <span id="currentTime"></span>
+        </div>
+    </div>
+
+    <script>
+        // Update current time (IST)
+        document.getElementById('currentTime').textContent = new Date().toLocaleString('en-IN', {
+            timeZone: 'Asia/Kolkata',
+            dateStyle: 'medium',
+            timeStyle: 'medium'
+        });
+
+        document.getElementById('calcBtn').addEventListener('click', function () {
+            const gsInput = document.getElementById('gsAmount');
+            const woInput = document.getElementById('woAmount');
+            const resultDiv = document.getElementById('result');
+
+            const gs = parseFloat(gsInput.value);
+            const wo = parseFloat(woInput.value);
+
+            // Validation
+            if (isNaN(gs) || isNaN(wo) || gs <= 0 || wo <= 0) {
+                resultDiv.innerHTML = '<span style="color:red;">Please enter valid positive amounts.</span>';
+                return;
+            }
+
+            // Calculate percentage difference
+            const percentDiff = ((wo - gs) / gs) * 100;
+            let apg = 0;
+
+            if (percentDiff < -15) {
+                const excessBelow = Math.abs(percentDiff) - 15;  // e.g. 20 - 15 = 5
+                const amountBelow = (excessBelow / 100) * gs;   // 5% of 100 = 5
+                apg = 0.5 * amountBelow;                        // 50% of 5 = 2.5
+            }
+
+            // Show result (rounded off - no decimals)
+            resultDiv.innerHTML = `APS = <strong>Γé╣${Math.round(apg)}</strong>`;
+
+            // Optional: Add animation
+            resultDiv.style.animation = 'pulse 0.3s';
+            setTimeout(() => resultDiv.style.animation = '', 300);
+        });
+    </script>
+</body>
+</html>

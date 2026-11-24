@@ -1,0 +1,880 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deductions Table Generator</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --light-bg: #f8f9fa;
+            --text-color: #333;
+            --border-radius: 6px;
+            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--light-bg);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 30px;
+            background-color: #fff;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: var(--primary-color);
+        }
+
+        .header h1 {
+            margin-bottom: 10px;
+            font-size: 2.2rem;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .form-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            font-size: 16px;
+            transition: var(--transition);
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+
+        .error {
+            color: var(--accent-color);
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        /* A0/B15/C30 toggle buttons */
+        .royalty-options {
+            display: flex;
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        .royalty-btn {
+            flex: 1;
+            padding: 10px 8px;
+            border: 2px solid;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            text-align: center;
+            transition: var(--transition);
+            background: #fff8e1;
+            color: #5d4037;
+            border-color: #8d6e63;
+        }
+
+        .royalty-btn.active-a0 {
+            background: #5d4037;
+            color: #fff;
+            border-color: #5d4037;
+        }
+
+        .royalty-btn.active-b15 {
+            background: #e65100;
+            color: #fff;
+            border-color: #e65100;
+        }
+
+        .royalty-btn.active-c30 {
+            background: #b71c1c;
+            color: #fff;
+            border-color: #b71c1c;
+        }
+
+        .royalty-info {
+            font-size: 0.82rem;
+            margin-top: 6px;
+            color: #e65100;
+            font-weight: 600;
+            min-height: 18px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 24px;
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: var(--transition);
+            flex: 1;
+            min-width: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .btn-print {
+            background-color: #27ae60;
+        }
+
+        .btn-print:hover {
+            background-color: #219653;
+        }
+
+        .btn-reset {
+            background-color: #95a5a6;
+        }
+
+        .btn-reset:hover {
+            background-color: #7f8c8d;
+        }
+
+        .btn-add {
+            background-color: #e67e22;
+        }
+
+        .btn-add:hover {
+            background-color: #d35400;
+        }
+
+        .button-icon {
+            margin-right: 8px;
+            font-size: 1.2em;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin-bottom: 30px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0 auto;
+            background-color: white;
+        }
+
+        table,
+        th,
+        td {
+            border: 1px solid #ddd;
+        }
+
+        th,
+        td {
+            padding: 12px 15px;
+            text-align: left;
+        }
+
+        th {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        .amount-cell {
+            text-align: right;
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+        }
+
+        .total-row {
+            font-weight: bold;
+            background-color: #e8f4fd !important;
+        }
+
+        .cheque-row {
+            font-weight: bold;
+            background-color: #e3f2fd !important;
+        }
+
+        .custom-deduction {
+            background-color: #fff8e1;
+        }
+
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            text-align: center;
+            color: #666;
+        }
+
+        .stamp {
+            margin-top: 15px;
+            font-style: italic;
+            color: #666;
+        }
+
+        .success-message {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: var(--border-radius);
+            margin-bottom: 20px;
+            text-align: center;
+            display: none;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 25px;
+            width: 50%;
+            max-width: 500px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            animation: modalFadeIn 0.3s;
+        }
+
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .modal-header h2 {
+            color: var(--primary-color);
+        }
+
+        .close-btn {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close-btn:hover {
+            color: #333;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .modal button {
+            min-width: auto;
+            flex: 0 1 auto;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @media (max-width: 768px) {
+            .form-container {
+                grid-template-columns: 1fr;
+            }
+
+            .actions {
+                flex-direction: column;
+            }
+
+            .modal-content {
+                width: 90%;
+                margin: 20% auto;
+            }
+        }
+
+        @media print {
+            @page {
+                margin: 0;
+            }
+
+            body * {
+                visibility: hidden;
+            }
+
+            body {
+                background-color: white;
+            }
+
+            #printArea,
+            #printArea * {
+                visibility: visible;
+            }
+
+            #printArea {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                padding: 20px;
+            }
+
+            .print-header {
+                text-align: center;
+                margin-bottom: 20px;
+            }
+
+            .print-title {
+                font-size: 24px;
+                font-weight: bold;
+                margin-bottom: 5px;
+            }
+
+            .print-subtitle {
+                font-size: 18px;
+                margin-bottom: 15px;
+            }
+
+            .print-info {
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 20px;
+                font-size: 14px;
+            }
+
+            .print-table {
+                width: 100%;
+                margin-bottom: 30px;
+            }
+
+            .print-table th,
+            .print-table td {
+                border: 1px solid black !important;
+                padding: 10px !important;
+            }
+
+            .print-table th {
+                background-color: #f2f2f2 !important;
+                color: black !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Deductions Table Generator</h1>
+            <p>Calculate all standard deductions for your bill amount</p>
+        </div>
+
+        <div class="success-message" id="successMessage"></div>
+
+        <div class="form-container">
+            <div>
+                <div class="form-group">
+                    <label for="amount">Bill Amount (&#8377;):</label>
+                    <input type="number" id="amount" placeholder="Enter the total bill amount" min="0" step="1">
+                    <div class="error" id="amountError"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="dv_deduction">(M.D.)Deposit-Vth (MD5) (8443) (8443-00-108-00-00) Amount
+                        (&#8377;):</label>
+                    <input type="number" id="dv_deduction" placeholder="Enter (M.D.)Deposit-Vth (MD5) deduction amount"
+                        min="0" step="1">
+                    <div class="error" id="dvError"></div>
+                </div>
+
+                <div class="form-group">
+                    <label>Mining Royalty / DFMT Option:</label>
+                    <div class="royalty-options">
+                        <button type="button" class="royalty-btn active-a0" id="btn-A0"
+                            onclick="setRoyaltyOption('A0')">
+                            A0<br><small>Royalty 0% | DFMT 0%</small>
+                        </button>
+                        <button type="button" class="royalty-btn" id="btn-B15" onclick="setRoyaltyOption('B15')">
+                            B15<br><small>Royalty 1.5% | DFMT 0.15%</small>
+                        </button>
+                        <button type="button" class="royalty-btn" id="btn-C30" onclick="setRoyaltyOption('C30')">
+                            C30<br><small>Royalty 3% | DFMT 0.3%</small>
+                        </button>
+                    </div>
+                    <div class="royalty-info" id="royaltyInfo"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="actions">
+            <button onclick="generateTable()">
+                <span class="button-icon">&#128202;</span> Generate Table
+            </button>
+            <button onclick="openCustomDeductionModal()" class="btn-add">
+                <span class="button-icon">&#10133;</span> Add Custom Deduction
+            </button>
+            <button onclick="resetForm()" class="btn-reset">
+                <span class="button-icon">&#128260;</span> Reset
+            </button>
+            <button onclick="printResults()" class="btn-print">
+                <span class="button-icon">&#128424;</span> Print Table
+            </button>
+        </div>
+
+        <div id="tableContainer" class="table-container" style="display: none;"></div>
+
+        <div class="footer">
+            <p>Prepared on Initiative of Mrs. Premlata Jain, AAO, PWD Udaipur</p>
+            <p class="stamp" id="timestamp"></p>
+        </div>
+    </div>
+
+    <!-- Custom Deduction Modal -->
+    <div id="customDeductionModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add Custom Deduction</h2>
+                <span class="close-btn" onclick="closeCustomDeductionModal()">&times;</span>
+            </div>
+
+            <div class="form-group">
+                <label for="customName">Deduction Name:</label>
+                <input type="text" id="customName" placeholder="Enter deduction name">
+            </div>
+
+            <div class="form-group">
+                <label for="deductionType">Deduction Type:</label>
+                <select id="deductionType">
+                    <option value="percentage">Percentage of Bill Amount</option>
+                    <option value="fixed">Fixed Amount</option>
+                </select>
+            </div>
+
+            <div class="form-group" id="percentageInput">
+                <label for="customPercentage">Percentage:</label>
+                <input type="number" id="customPercentage" placeholder="Enter percentage" min="0" max="100" step="0.01">
+            </div>
+
+            <div class="form-group" id="fixedInput" style="display: none;">
+                <label for="customAmount">Amount (&#8377;):</label>
+                <input type="number" id="customAmount" placeholder="Enter fixed amount" min="0" step="1">
+            </div>
+
+            <div class="modal-buttons">
+                <button onclick="closeCustomDeductionModal()" class="btn-reset">Cancel</button>
+                <button onclick="addCustomDeduction()" class="btn-add">Add Deduction</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Print Area (Hidden until print) -->
+    <div id="printArea" style="display: none;">
+        <div class="print-header">
+            <div class="print-title">Deductions Table</div>
+            <div class="print-subtitle" id="printBillTitle"></div>
+        </div>
+        <div class="print-info">
+            <div id="printDate"></div>
+            <div id="printReference"></div>
+        </div>
+        <div id="printTableContainer"></div>
+    </div>
+
+    <script>
+        window.addEventListener('error', function (e) {
+            if (e.message.includes('NetworkError')) {
+                console.log('Network error handled');
+                return true;
+            }
+        });
+
+        let customDeductions = [];
+        let royaltyOption = 'A0'; // default
+
+        // ── Royalty option selector ──────────────────────────────────────────
+        function setRoyaltyOption(opt) {
+            royaltyOption = opt;
+            ['A0', 'B15', 'C30'].forEach(function (o) {
+                var btn = document.getElementById('btn-' + o);
+                btn.className = 'royalty-btn';
+            });
+            var activeClass = opt === 'A0' ? 'active-a0' : opt === 'B15' ? 'active-b15' : 'active-c30';
+            document.getElementById('btn-' + opt).classList.add(activeClass);
+
+            var info = document.getElementById('royaltyInfo');
+            if (opt === 'A0') {
+                info.textContent = '';
+            } else {
+                var royaltyPct = opt === 'B15' ? '1.5%' : '3%';
+                var dfmtPct = opt === 'B15' ? '0.15%' : '0.3%';
+                info.textContent = '\u25b6 Mines & Minerals / Royalty: ' + royaltyPct + '  |  PD Account (DMFT): ' + dfmtPct;
+            }
+        }
+
+        // ── Currency formatter ───────────────────────────────────────────────
+        function formatIndianCurrency(amount) {
+            return new Intl.NumberFormat('en-IN', {
+                style: 'currency',
+                currency: 'INR',
+                maximumFractionDigits: 2
+            }).format(amount);
+        }
+
+        // ── Round to next even (used for GST only) ───────────────────────────
+        function roundToEven(num) {
+            var r = Math.round(num);
+            return (r % 2 !== 0) ? r + 1 : r;
+        }
+
+        // ── Validation ───────────────────────────────────────────────────────
+        function validateForm() {
+            var isValid = true;
+            var amount = parseFloat(document.getElementById('amount').value);
+            var dvDeduction = parseFloat(document.getElementById('dv_deduction').value);
+
+            document.getElementById('amountError').style.display = 'none';
+            document.getElementById('dvError').style.display = 'none';
+
+            if (isNaN(amount) || amount <= 0) {
+                document.getElementById('amountError').textContent = 'Please enter a valid bill amount greater than zero';
+                document.getElementById('amountError').style.display = 'block';
+                isValid = false;
+            }
+
+            if (dvDeduction !== 0 && (isNaN(dvDeduction) || dvDeduction < 0)) {
+                document.getElementById('dvError').textContent = 'Please enter a valid (M.D.)Deposit-Vth (MD5) amount (must be zero or positive)';
+                document.getElementById('dvError').style.display = 'block';
+                isValid = false;
+            }
+
+            return isValid;
+        }
+
+        // ── Generate Table ───────────────────────────────────────────────────
+        function generateTable() {
+            if (!validateForm()) return;
+
+            var amount = parseFloat(document.getElementById('amount').value);
+            var dvDeduction = parseFloat(document.getElementById('dv_deduction').value) || 0;
+
+            // Fixed rates
+            var itRate = 2;   // Income Tax
+            var gstRate = 2;   // GSTIN Deduction
+            var lcRate = 1;   // Labour Welfare
+            var sdRate = 10;  // Deposit-II (SD2)
+
+            // Mining Royalty & DFMT rates — based on A0/B15/C30 (matching BillForm.tsx logic)
+            var miningRoyaltyPct = royaltyOption === 'B15' ? 1.5 : royaltyOption === 'C30' ? 3 : 0;
+            var dfmtPct = royaltyOption === 'B15' ? 0.15 : royaltyOption === 'C30' ? 0.3 : 0;
+
+            // Special handling for GST — round to next even number
+            var gstAmount = roundToEven(amount * gstRate / 100);
+
+            // Build deductions in prescribed order
+            var deductions = [];
+
+            // 1. Income Tax @ 2%
+            deductions.push({ type: "Income Tax (8658-00-112-00-00)", rate: itRate + "%", amount: Math.round(amount * itRate / 100) });
+
+            // 2. GSTIN Deduction @ 2%
+            deductions.push({ type: "GSTIN Deduction (8658-00-139-00-00)", rate: gstRate + "%", amount: gstAmount });
+
+            // 3. PD Account (DMFT) — only for B15 / C30
+            if (royaltyOption !== 'A0') {
+                deductions.push({ type: "PD Account (DMFT) 8342 (8342-00-120-65-00)", rate: dfmtPct + "%", amount: Math.round(amount * dfmtPct / 100) });
+            }
+
+            // 4. Labour Welfare @ 1%
+            deductions.push({ type: "Labour Welfare (0230-00-800-06-00)", rate: lcRate + "%", amount: Math.round(amount * lcRate / 100) });
+
+            // 5. Mines & Minerals / Royalty — only for B15 / C30
+            if (royaltyOption !== 'A0') {
+                deductions.push({ type: "Mines & Minerals / Royalty (0853-00-102-01-01)", rate: miningRoyaltyPct + "%", amount: Math.round(amount * miningRoyaltyPct / 100) });
+            }
+
+            // 6. Deposit-II (SD2) @ 10%
+            deductions.push({ type: "Deposit-II (SD2) (8443) (8443-00-108-00-00)", rate: sdRate + "%", amount: Math.round(amount * sdRate / 100) });
+
+            // 7. (M.D.)Deposit-Vth (MD5) — fixed input
+            deductions.push({ type: "(M.D.)Deposit-Vth (MD5) (8443) (8443-00-108-00-00)", rate: "-", amount: dvDeduction });
+
+            // Append any custom deductions
+            customDeductions.forEach(function (item) { deductions.push(item); });
+
+            // ── Build table ──────────────────────────────────────────────────
+            var table = document.createElement('table');
+            table.className = 'fade-in';
+
+            var headerRow = table.insertRow();
+            ["S.No.", "Deduction Type", "Percentage / Rate", "Deduction Amount (\u20b9)"].forEach(function (text) {
+                var th = document.createElement('th');
+                th.textContent = text;
+                headerRow.appendChild(th);
+            });
+
+            var totalDeduction = 0;
+            var serialNo = 1;
+
+            deductions.forEach(function (item) {
+                var row = table.insertRow();
+
+                var c1 = row.insertCell(); c1.textContent = serialNo++;
+                var c2 = row.insertCell(); c2.textContent = item.type;
+                var c3 = row.insertCell(); c3.textContent = item.rate;
+                var c4 = row.insertCell();
+                c4.textContent = formatIndianCurrency(item.amount);
+                c4.className = 'amount-cell';
+
+                totalDeduction += item.amount;
+
+                if (item.isCustom) { row.className = 'custom-deduction'; }
+            });
+
+            // Cheque row
+            var chequeAmount = Math.round(amount - totalDeduction);
+            var chequeRow = table.insertRow();
+            chequeRow.className = 'cheque-row';
+            [serialNo++, "CHEQUE", "-", formatIndianCurrency(chequeAmount)].forEach(function (text, i) {
+                var cell = chequeRow.insertCell();
+                cell.textContent = text;
+                if (i === 3) cell.className = 'amount-cell';
+            });
+
+            // Total row
+            var totalRow = table.insertRow();
+            totalRow.className = 'total-row';
+            ["-", "TOTAL", "-", formatIndianCurrency(amount)].forEach(function (text, i) {
+                var cell = totalRow.insertCell();
+                cell.textContent = text;
+                if (i === 3) cell.className = 'amount-cell';
+            });
+
+            // Display
+            var tableContainer = document.getElementById('tableContainer');
+            tableContainer.innerHTML = '';
+            tableContainer.appendChild(table);
+            tableContainer.style.display = 'block';
+
+            // Clone for print
+            var printTableContainer = document.getElementById('printTableContainer');
+            var printTable = table.cloneNode(true);
+            printTable.className = 'print-table';
+            printTableContainer.innerHTML = '';
+            printTableContainer.appendChild(printTable);
+
+            var successMessage = document.getElementById('successMessage');
+            successMessage.textContent = 'Deductions table generated successfully!';
+            successMessage.style.display = 'block';
+            setTimeout(function () { successMessage.style.display = 'none'; }, 5000);
+        }
+
+        // ── Reset ────────────────────────────────────────────────────────────
+        function resetForm() {
+            document.getElementById('amount').value = '';
+            document.getElementById('dv_deduction').value = '';
+            document.getElementById('amountError').style.display = 'none';
+            document.getElementById('dvError').style.display = 'none';
+            document.getElementById('tableContainer').style.display = 'none';
+            document.getElementById('successMessage').style.display = 'none';
+            customDeductions = [];
+            setRoyaltyOption('A0');
+        }
+
+        // ── Print ────────────────────────────────────────────────────────────
+        function printResults() {
+            if (document.getElementById('tableContainer').style.display === 'none') {
+                alert('Please generate a deductions table first.');
+                return;
+            }
+            document.getElementById('printArea').style.display = 'block';
+            window.print();
+        }
+
+        // ── Custom Deduction Modal ────────────────────────────────────────────
+        function openCustomDeductionModal() {
+            document.getElementById('customName').value = '';
+            document.getElementById('customPercentage').value = '';
+            document.getElementById('customAmount').value = '';
+            document.getElementById('deductionType').value = 'percentage';
+            document.getElementById('percentageInput').style.display = 'block';
+            document.getElementById('fixedInput').style.display = 'none';
+            document.getElementById('customDeductionModal').style.display = 'block';
+        }
+
+        function closeCustomDeductionModal() {
+            document.getElementById('customDeductionModal').style.display = 'none';
+        }
+
+        document.getElementById('deductionType').addEventListener('change', function () {
+            if (this.value === 'percentage') {
+                document.getElementById('percentageInput').style.display = 'block';
+                document.getElementById('fixedInput').style.display = 'none';
+            } else {
+                document.getElementById('percentageInput').style.display = 'none';
+                document.getElementById('fixedInput').style.display = 'block';
+            }
+        });
+
+        function addCustomDeduction() {
+            var deductionName = document.getElementById('customName').value.trim();
+            var deductionType = document.getElementById('deductionType').value;
+            var amount = parseFloat(document.getElementById('amount').value);
+
+            if (!deductionName) { alert('Please enter a name for the deduction'); return; }
+            if (!amount) { alert('Please enter the bill amount first'); return; }
+
+            var customDeduction = { type: deductionName, isCustom: true };
+
+            if (deductionType === 'percentage') {
+                var percentage = parseFloat(document.getElementById('customPercentage').value);
+                if (isNaN(percentage) || percentage < 0 || percentage > 100) {
+                    alert('Please enter a valid percentage between 0 and 100');
+                    return;
+                }
+                customDeduction.rate = percentage + '%';
+                customDeduction.amount = Math.round(amount * percentage / 100);
+            } else {
+                var fixedAmount = parseFloat(document.getElementById('customAmount').value);
+                if (isNaN(fixedAmount) || fixedAmount < 0) {
+                    alert('Please enter a valid amount');
+                    return;
+                }
+                customDeduction.rate = '-';
+                customDeduction.amount = fixedAmount;
+            }
+
+            customDeductions.push(customDeduction);
+            closeCustomDeductionModal();
+
+            if (document.getElementById('tableContainer').style.display !== 'none') {
+                generateTable();
+            }
+
+            var successMessage = document.getElementById('successMessage');
+            successMessage.textContent = 'Custom deduction "' + deductionName + '" added successfully!';
+            successMessage.style.display = 'block';
+            setTimeout(function () { successMessage.style.display = 'none'; }, 3000);
+        }
+
+        window.onclick = function (event) {
+            var modal = document.getElementById('customDeductionModal');
+            if (event.target === modal) { closeCustomDeductionModal(); }
+        };
+
+        // Real-time validation
+        document.querySelectorAll('input').forEach(function (input) {
+            input.addEventListener('input', function () {
+                if (this.id === 'amount') {
+                    var v = parseFloat(this.value);
+                    if (!isNaN(v) && v > 0) document.getElementById('amountError').style.display = 'none';
+                }
+                if (this.id === 'dv_deduction') {
+                    var v = parseFloat(this.value);
+                    if (!isNaN(v) && v >= 0) document.getElementById('dvError').style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>

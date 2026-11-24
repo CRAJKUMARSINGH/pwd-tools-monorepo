@@ -1,7 +1,8 @@
 # See https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
 
 # compiled output
-dist
+# dist is tracked — pre-built and committed for Netlify direct-serve
+# dist
 tmp
 out-tsc
 *.tsbuildinfo
@@ -48,9 +49,6 @@ Thumbs.db
 .cache/
 .local/
 Attached_Assets/Monorepo-Builder.zip
-
-# pnpm lockfile — v9 catalog: format not supported on Netlify build servers
-pnpm-lock.yaml
 
 # Redundant/duplicate root-level folders
 excel-to-emd/

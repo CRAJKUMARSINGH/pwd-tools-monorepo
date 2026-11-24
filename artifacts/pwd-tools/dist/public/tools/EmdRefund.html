@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EMD Refund — Hand Receipt (RPWA 28)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        /* ── Reset ── */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* ── Keyframes ── */
+        @keyframes shimmer {
+            0% {
+                background-position: 0% center;
+            }
+
+            100% {
+                background-position: 200% center;
+            }
+        }
+
+        @keyframes cardIn {
+            from {
+                opacity: 0;
+                transform: translateY(32px) scale(0.96);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        @keyframes flameDance {
+
+            0%,
+            100% {
+                transform: scaleX(1) scaleY(1) rotate(-2deg);
+                opacity: 1;
+            }
+
+            50% {
+                transform: scaleX(0.85) scaleY(1.15) rotate(2deg);
+                opacity: 0.85;
+            }
+        }
+
+        @keyframes diwaFloat {
+
+            0%,
+            100% {
+                transform: translateY(0) rotate(-2deg);
+            }
+
+            50% {
+                transform: translateY(-8px) rotate(2deg);
+            }
+        }
+
+        /* ── Page background ── */
+        html {
+            height: 100%;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            min-height: 100%;
+            background: linear-gradient(160deg, #fff8e1 0%, #fff3e0 40%, #fce4ec 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px 16px;
+        }
+
+        /* ── Landing card ── */
+        #prompt-container {
+            background: #fff;
+            border-radius: 22px;
+            box-shadow:
+                0 28px 64px rgba(123, 13, 0, 0.18),
+                0 0 0 2px rgba(255, 215, 0, 0.35);
+            width: 100%;
+            max-width: 460px;
+            overflow: hidden;
+            animation: cardIn 0.5s cubic-bezier(.22, .68, 0, 1.2) both;
+        }
+
+        /* ── Card header ── */
+        .card-header {
+            background: linear-gradient(135deg, #7B0D00 0%, #c0392b 30%, #e67e22 60%, #c0392b 80%, #7B0D00 100%);
+            background-size: 300% auto;
+            animation: shimmer 8s linear infinite;
+            padding: 28px 28px 20px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            border-bottom: 3px solid #FFD700;
+        }
+
+        /* subtle pattern overlay */
+        .card-header::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        /* diya strip */
+        .diya-row {
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-end;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .diya-row span {
+            font-size: 18px;
+            filter: drop-shadow(0 0 6px #FFD700) drop-shadow(0 0 10px #FF8C00);
+        }
+
+        .diya-row span:nth-child(1) {
+            animation: diwaFloat 2.8s 0.0s ease-in-out infinite;
+        }
+
+        .diya-row span:nth-child(2) {
+            animation: diwaFloat 3.2s 0.5s ease-in-out infinite;
+        }
+
+        .diya-row span:nth-child(3) {
+            animation: diwaFloat 2.5s 0.9s ease-in-out infinite;
+        }
+
+        .diya-row span:nth-child(4) {
+            animation: diwaFloat 3.0s 0.2s ease-in-out infinite;
+        }
+
+        .diya-row span:nth-child(5) {
+            animation: diwaFloat 2.7s 0.7s ease-in-out infinite;
+        }
+
+        .header-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255, 215, 0, 0.18);
+            border: 1.5px solid rgba(255, 215, 0, 0.5);
+            border-radius: 50px;
+            padding: 4px 14px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #FFD700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header-icon {
+            font-size: 44px;
+            display: block;
+            margin-bottom: 8px;
+            filter: drop-shadow(0 2px 10px rgba(255, 215, 0, 0.6));
+            position: relative;
+            z-index: 1;
+            animation: flameDance 3s ease-in-out infinite;
+        }
+
+        .card-header h1 {
+            font-size: 21px;
+            font-weight: 800;
+            color: #FFD700;
+            letter-spacing: -0.01em;
+            line-height: 1.2;
+            position: relative;
+            z-index: 1;
+            text-shadow: 0 0 18px rgba(255, 215, 0, 0.5), 0 2px 6px rgba(0, 0, 0, 0.45);
+        }
+
+        .card-header h1 span {
+            color: #fff;
+        }
+
+        .card-header p {
+            font-size: 11.5px;
+            color: rgba(255, 238, 170, 0.85);
+            margin-top: 5px;
+            position: relative;
+            z-index: 1;
+            letter-spacing: 0.04em;
+        }
+
+        /* Divider strip */
+        .header-strip {
+            height: 4px;
+            background: linear-gradient(90deg, #FFD700, #FFA500, #FF6B35, #FFA500, #FFD700);
+            background-size: 200% auto;
+            animation: shimmer 3s linear infinite;
+        }
+
+        /* ── Form body ── */
+        .card-body {
+            padding: 26px 28px 24px;
+            background: linear-gradient(180deg, #fffdf7 0%, #fff 100%);
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            color: #7B0D00;
+            margin-bottom: 7px;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        .form-group label .lbl-icon {
+            font-size: 14px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 14px;
+            font-size: 14.5px;
+            font-family: inherit;
+            border: 1.5px solid #f5c6aa;
+            border-radius: 10px;
+            background: #fffbf5;
+            color: #3a1a00;
+            transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+            outline: none;
+        }
+
+        .form-group input:focus {
+            border-color: #c0392b;
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(192, 57, 43, 0.12);
+        }
+
+        .form-group input::placeholder {
+            color: #c8a080;
+            font-size: 13px;
+        }
+
+        /* Amount prefix wrapper */
+        .input-prefix-wrap {
+            position: relative;
+        }
+
+        .input-prefix-wrap .prefix {
+            position: absolute;
+            left: 13px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 15px;
+            color: #c0392b;
+            font-weight: 800;
+            pointer-events: none;
+        }
+
+        .input-prefix-wrap input {
+            padding-left: 30px;
+        }
+
+        /* ── Generate button ── */
+        #generate-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            margin-top: 6px;
+            padding: 14px;
+            background: linear-gradient(90deg, #880e4f, #c0392b, #e67e22, #c0392b, #880e4f);
+            background-size: 200% auto;
+            animation: shimmer 4s linear infinite;
+            color: #FFD700;
+            border: 2px solid rgba(255, 215, 0, 0.4);
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 800;
+            cursor: pointer;
+            letter-spacing: 0.04em;
+            box-shadow: 0 4px 20px rgba(123, 13, 0, 0.35);
+            transition: transform 0.15s, box-shadow 0.15s;
+            font-family: inherit;
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        #generate-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 28px rgba(123, 13, 0, 0.45);
+        }
+
+        #generate-button:active {
+            transform: translateY(0);
+            box-shadow: 0 3px 10px rgba(123, 13, 0, 0.3);
+        }
+
+        /* ── Info footer strip inside card ── */
+        .card-footer-note {
+            background: linear-gradient(90deg, #fff8e1, #fce4ec, #fff8e1);
+            border-top: 1.5px solid #f5c6aa;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11.5px;
+            color: #7B2D00;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+        }
+
+        /* ── Credits footer ── */
+        .card-credits {
+            background: linear-gradient(90deg, #fffbf0, #fff8e1, #fffbf0);
+            border-top: 2px solid #e6a817;
+            padding: 12px 20px;
+            text-align: center;
+            font-size: 11.5px;
+            color: #7B2D00;
+        }
+
+        .card-credits .credits-deco {
+            font-size: 15px;
+            margin-bottom: 4px;
+            letter-spacing: 0.2em;
+        }
+
+        .card-credits .credits-title {
+            font-weight: 800;
+            color: #7B0D00;
+            font-size: 12px;
+            margin-bottom: 2px;
+        }
+
+        /* ── Print button ── */
+        #print-btn {
+            display: none;
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 999;
+            background: linear-gradient(135deg, #7B0D00, #c0392b, #e67e22);
+            color: #FFD700;
+            border: 2px solid #FFD700;
+            border-radius: 50px;
+            padding: 14px 26px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(123, 13, 0, 0.4);
+            font-family: inherit;
+            align-items: center;
+            gap: 8px;
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+
+        #print-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(123, 13, 0, 0.5);
+        }
+
+        /* ── Receipt wrapper ── */
+        #receipt-wrapper {
+            display: none;
+            width: 210mm;
+            margin: 0 auto;
+            background: white;
+        }
+
+        .container {
+            width: 100%;
+            border: 2px solid #ccc;
+            padding: 12px 15px;
+            box-sizing: border-box;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2px;
+        }
+
+        .header h2 {
+            margin: 3px 0;
+            font-size: 14px;
+        }
+
+        .header p {
+            margin: 2px 0;
+            font-size: 12px;
+        }
+
+        .details p {
+            margin: 3px 0;
+            font-size: 12px;
+        }
+
+        .amount-words {
+            font-style: italic;
+        }
+
+        .signature-area {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .signature-area td,
+        .signature-area th {
+            border: 1px solid #ccc;
+            padding: 4px 5px;
+            text-align: left;
+            font-size: 12px;
+        }
+
+        .offices {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .offices td,
+        .offices th {
+            border: 1px solid black;
+            padding: 4px 5px;
+            text-align: left;
+            word-wrap: break-word;
+            font-size: 12px;
+        }
+
+        .input-field {
+            border-bottom: 1px dotted #ccc;
+            padding: 3px;
+            width: calc(100% - 10px);
+            display: inline-block;
+        }
+
+        .seal-container {
+            width: 40mm;
+            height: 25mm;
+            margin-top: 8px;
+        }
+
+        .seal {
+            max-width: 100%;
+            max-height: 100%;
+            text-align: center;
+            line-height: 40mm;
+            color: blue;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+
+        /* ── Blue approval box ── */
+        .bottom-left-box {
+            border: 2px solid #1a3a6e;
+            border-radius: 6px;
+            padding: 10px 14px 12px;
+            width: 320px;
+            text-align: left;
+            margin-top: 12px;
+            background: #f0f5ff;
+            box-shadow: inset 0 0 0 1px rgba(26, 58, 110, 0.08);
+        }
+
+        .bottom-left-box .box-title {
+            font-size: 11px;
+            font-weight: 800;
+            color: #1a3a6e;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            border-bottom: 1.5px solid #1a3a6e;
+            padding-bottom: 4px;
+            margin-bottom: 6px;
+        }
+
+        .bottom-left-box p {
+            margin: 3px 0;
+            font-size: 12px;
+        }
+
+        .bottom-left-box .blue-text {
+            color: #1a3a6e;
+            font-weight: 600;
+        }
+
+        /* Seal / authority signature row inside box */
+        .seal-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-top: 14px;
+            gap: 8px;
+        }
+
+        .seal-item {
+            flex: 1;
+            text-align: center;
+        }
+
+        .seal-item .sig-line {
+            border-bottom: 1.5px solid #1a3a6e;
+            height: 20px;
+            margin-bottom: 3px;
+        }
+
+        .seal-item .sig-label {
+            font-size: 10px;
+            font-weight: 700;
+            color: #1a3a6e;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        /* ── Print styles ── */
+        @media print {
+            @page {
+                size: A4 portrait;
+                margin: 0;
+            }
+
+            html,
+            body {
+                margin: 0;
+                padding: 0;
+                width: 210mm;
+                background: white;
+            }
+
+            #prompt-container,
+            #print-btn,
+            body>*:not(#receipt-wrapper) {
+                display: none !important;
+            }
+
+            #receipt-wrapper {
+                display: block !important;
+                width: 210mm;
+                margin: 0;
+                padding: 10mm 12mm;
+                box-sizing: border-box;
+            }
+
+            .container {
+                border: none;
+                padding: 0;
+                width: 100%;
+            }
+
+            .input-field {
+                border: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ══ Landing input card ══ -->
+    <div id="prompt-container">
+
+        <div class="card-header">
+            <div class="diya-row">
+                <span>🪔</span><span>🪔</span><span>🪔</span><span>🪔</span><span>🪔</span>
+            </div>
+            <div class="header-badge">💼 PWD Tools Suite</div>
+            <span class="header-icon">🧾</span>
+            <h1>EMD Refund &mdash; <span>Hand Receipt</span></h1>
+            <p>RPWA 28 &nbsp;|&nbsp; PWF&amp;A Rules 418, 424, 436 &amp; 438</p>
+        </div>
+
+        <div class="header-strip"></div>
+
+        <div class="card-body">
+
+            <div class="form-group">
+                <label><span class="lbl-icon">👤</span> Payee Name</label>
+                <input type="text" id="payee" placeholder="Enter payee / contractor name" autocomplete="off">
+            </div>
+
+            <div class="form-group">
+                <label><span class="lbl-icon">💰</span> EMD Amount</label>
+                <div class="input-prefix-wrap">
+                    <span class="prefix">₹</span>
+                    <input type="number" id="amount" placeholder="Enter amount in rupees" min="0" step="1">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label><span class="lbl-icon">🏗️</span> Name of Work</label>
+                <input type="text" id="work" placeholder="Enter name of work / scheme" autocomplete="off">
+            </div>
+
+            <button id="generate-button">
+                🪔&nbsp; Generate Hand Receipt
+            </button>
+
+        </div>
+
+        <div class="card-footer-note">
+            <span>ℹ️</span>
+            <span>Receipt will auto-open print dialog — save as PDF or print directly.</span>
+        </div>
+
+        <div class="card-credits">
+            <div class="credits-deco">🪔 ✦ 🌸 ✦ 🪔</div>
+            <div class="credits-title">🏗️ PWD Tools Suite</div>
+            <div>Prepared on Initiative of Mrs. Premlata Jain, AAO | PWD Udaipur, Rajasthan</div>
+        </div>
+
+    </div>
+
+    <!-- ══ Receipt output (hidden until generated) ══ -->
+    <div id="receipt-wrapper">
+        <div class="container" id="receipt-content"></div>
+    </div>
+
+    <!-- ══ Floating print button ══ -->
+    <button id="print-btn" onclick="window.print()">🖨️&nbsp; Print / Save PDF</button>
+
+    <script>
+        function convertNumberToWords(num) {
+            const ones = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine"];
+            const tens = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
+            const teens = ["Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"];
+
+            if (num === 0) return "Zero";
+            let words = "";
+
+            if (Math.floor(num / 10000000)) { words += convertNumberToWords(Math.floor(num / 10000000)) + " Crore "; num %= 10000000; }
+            if (Math.floor(num / 100000)) { words += convertNumberToWords(Math.floor(num / 100000)) + " Lakh "; num %= 100000; }
+            if (Math.floor(num / 1000)) { words += convertNumberToWords(Math.floor(num / 1000)) + " Thousand "; num %= 1000; }
+            if (Math.floor(num / 100)) { words += convertNumberToWords(Math.floor(num / 100)) + " Hundred "; num %= 100; }
+            if (num > 0) {
+                if (words !== "") words += " and ";
+                if (num < 10) words += ones[num];
+                else if (num < 20) words += teens[num - 10];
+                else {
+                    words += tens[Math.floor(num / 10)];
+                    if (num % 10 > 0) words += " " + ones[num % 10];
+                }
+            }
+            return words.trim();
+        }
+
+        function generateReceiptHTML(payee, amount, work) {
+            const amountInWords = convertNumberToWords(parseFloat(amount));
+            return `
+                <div class="header">
+                    <h2>Payable to: - ${payee}</h2>
+                    <h2>HAND RECEIPT (RPWA 28)</h2>
+                    <p>(Referred to in PWF&amp;A Rules 418,424,436 &amp; 438)</p>
+                    <p>Division - PWD District Division-II, Udaipur</p>
+                </div>
+                <div class="details">
+                    <p>(1) Cash Book Voucher No. &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Date &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p>
+                    <p>(2) Cheque No. and Date &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p>
+                    <p>(3) Pay for ECS Rs.${amount}/- (Rupees <span class="amount-words">${amountInWords} only</span>)</p>
+                    <p>(4) Paid by me</p>
+                    <p>(5) Received from The Executive Engineer PWD District Division-II, Udaipur the sum of Rs. ${amount}/- (Rupees <span class="amount-words">${amountInWords} only</span>)</p>
+                    <p>Name of work for which payment is made: <span class="input-field">${work}</span></p>
+                    <p>Chargeable to Head:- 8443 [EMD-Refund]</p>
+                    <table class="signature-area">
+                        <tr>
+                            <td>Witness</td>
+                            <td>Stamp</td>
+                            <td>Signature of payee</td>
+                        </tr>
+                        <tr>
+                            <td>Cash Book No. &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Page No. &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                    </table>
+                    <table class="offices">
+                        <tr>
+                            <td>For use in the Divisional Office</td>
+                            <td>For use in the Accountant General's office</td>
+                        </tr>
+                        <tr>
+                            <td>Checked</td>
+                            <td>Audited/Reviewed</td>
+                        </tr>
+                        <tr>
+                            <td>Accounts Clerk</td>
+                            <td>DA &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Auditor &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Supdt. &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; G.O.</td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="seal-container" style="display:none;"></div>
+                <div class="bottom-left-box">
+                    <div class="box-title">✦ For Office Use — Passed / Approved</div>
+                    <p class="blue-text">Passed for Rs. ${amount}</p>
+                    <p class="blue-text">In Words Rupees: ${amountInWords} Only</p>
+                    <p class="blue-text">Chargeable to Head:- 8443 [EMD-Refund]</p>
+                    <div class="seal-row">
+                        <div class="seal-item">
+                            <div class="sig-line"></div>
+                            <div class="sig-label">Ar.</div>
+                        </div>
+                        <div class="seal-item">
+                            <div class="sig-line"></div>
+                            <div class="sig-label">D.A.</div>
+                        </div>
+                        <div class="seal-item">
+                            <div class="sig-line"></div>
+                            <div class="sig-label">E.E.</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        document.getElementById('generate-button').addEventListener('click', function () {
+            const payee = document.getElementById('payee').value.trim();
+            const amount = parseFloat(document.getElementById('amount').value);
+            const work = document.getElementById('work').value.trim();
+
+            if (!payee || isNaN(amount) || amount <= 0 || !work) {
+                const btn = document.getElementById('generate-button');
+                btn.style.transition = 'transform 0.08s';
+                const shakes = ['-5px', '5px', '-5px', '5px', '0px'];
+                shakes.forEach((v, i) => {
+                    setTimeout(() => { btn.style.transform = `translateX(${v})`; }, i * 70);
+                });
+                setTimeout(() => { btn.style.transform = ''; }, 420);
+                alert("Please fill in all fields. Amount must be greater than zero.");
+                return;
+            }
+
+            document.getElementById('receipt-content').innerHTML = generateReceiptHTML(payee, amount, work);
+            document.getElementById('prompt-container').style.display = 'none';
+            document.getElementById('receipt-wrapper').style.display = 'block';
+
+            // Reset body to normal flow so receipt aligns from the top
+            document.body.style.display = 'block';
+            document.body.style.alignItems = '';
+            document.body.style.justifyContent = '';
+            document.body.style.padding = '0';
+
+            const printBtn = document.getElementById('print-btn');
+            printBtn.style.display = 'flex';
+
+            setTimeout(function () { window.print(); }, 300);
+        });
+    </script>
+</body>
+
+</html>
