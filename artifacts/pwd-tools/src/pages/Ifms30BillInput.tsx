@@ -416,8 +416,8 @@ export default function Ifms30BillInput() {
                 <div style={{ position: "relative", overflow: "hidden", background: "linear-gradient(135deg, #7b0d00 0%, #c0392b 25%, #e67e22 50%, #c0392b 75%, #7b0d00 100%)", backgroundSize: "300% auto", animation: "ifms-shimmer 8s linear infinite", borderBottom: "4px solid #ffd700" }}>
                     <Diyas />
                     <div style={{ position: "relative", zIndex: 1, padding: "14px 20px 12px", textAlign: "center" }}>
-                        <div style={{ color: "#ffd700", fontSize: "1.35rem", fontWeight: 900, textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>
-                            आईएफएमएस 3.0 बिल इनपुट
+                        <div style={{ color: "#ffffff", fontSize: "1.35rem", fontWeight: 900, textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>
+                            IFMS 3.0 Bill Input
                         </div>
                         <div style={{ marginTop: "3px", color: "#ffeaa7", fontSize: "0.78rem", fontWeight: 600 }}>
                             बिल कटौती व मद वार विभाजन
