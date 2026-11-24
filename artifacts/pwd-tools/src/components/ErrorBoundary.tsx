@@ -32,7 +32,7 @@ export default class ErrorBoundary extends Component<Props, State> {
           <button
             className="rounded border px-3 py-1.5 text-sm font-semibold"
             onClick={() => {
-              location.href = "/";
+              location.href = "/home";
             }}
           >
             Home

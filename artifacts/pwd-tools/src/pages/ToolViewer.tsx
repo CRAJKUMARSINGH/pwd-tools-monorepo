@@ -55,7 +55,7 @@ export default function ToolViewer() {
       <div style={{ padding: "48px", textAlign: "center", background: "linear-gradient(160deg, #fff8e1 0%, #fff3e0 40%, #fce4ec 100%)", minHeight: "100vh" }}>
         <div style={{ fontSize: "48px" }}>❓</div>
         <h2 style={{ color: "#7B0D00" }}>Tool not found</h2>
-        <button onClick={() => navigate("/")} style={backBtnStyle}>🪔 Back to Home</button>
+        <button onClick={() => navigate("/home")} style={backBtnStyle}>🪔 Back to Home</button>
       </div>
     );
   }
@@ -93,7 +93,7 @@ export default function ToolViewer() {
         }}>
           <DiyasBar />
           <button
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/home")}
             style={{
               position: "relative",
               zIndex: 1,

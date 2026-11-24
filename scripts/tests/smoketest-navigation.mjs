@@ -78,7 +78,7 @@ for (const { route, comp } of routes) {
   }
   const text = readFileSync(file, "utf8");
 
-  const hasHome = /<ToolShell\b/.test(text) || /navigate\(\s*["'`]\/["'`]\s*\)/.test(text);
+  const hasHome = /<ToolShell\b/.test(text) || /navigate\(\s*["'`]\/(home)?["'`]\s*\)/.test(text);
   const hasTitle = /useDocumentTitle\s*\(/.test(text);
 
   const checks = [[hasTitle, "document.title (useDocumentTitle)"]];
@@ -95,7 +95,7 @@ for (const { route, comp } of routes) {
 const notFoundFile = path.join(SRC, "pages/not-found.tsx");
 if (existsSync(notFoundFile)) {
   const nf = readFileSync(notFoundFile, "utf8");
-  const hasHome = /<ToolShell\b/.test(nf) || /navigate\(\s*["'`]\/["'`]\s*\)/.test(nf);
+  const hasHome = /<ToolShell\b/.test(nf) || /navigate\(\s*["'`]\/(home)?["'`]\s*\)/.test(nf);
   if (!hasHome) {
     failed++;
     console.log(`  ✗ not-found.tsx                                  missing Home affordance`);

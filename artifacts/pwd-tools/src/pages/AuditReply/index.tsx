@@ -91,7 +91,7 @@ export default function AuditReplyPage() {
         >
           <button
             type="button"
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/home")}
             aria-label="Back to Home"
             className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-primary-foreground/40 bg-white/15 px-3 py-1.5 text-xs font-bold transition-colors hover:bg-white/30 active:bg-white/40"
           >

@@ -356,7 +356,7 @@ export default function DataVaultPage() {
             </label>
             {/* Back */}
             <button
-              onClick={() => navigate("/")}
+              onClick={() => navigate("/home")}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white font-semibold text-xs shadow transition-colors"
             >
               ← Home

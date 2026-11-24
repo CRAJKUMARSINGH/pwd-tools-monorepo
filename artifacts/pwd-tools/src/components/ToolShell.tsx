@@ -17,7 +17,7 @@ export default function ToolShell({ title, subtitle, actions, children }: Props)
       <header className="hide-on-print sticky top-0 z-30 flex items-center gap-3 border-b bg-primary px-3 py-2.5 text-primary-foreground">
         <button
           type="button"
-          onClick={() => navigate("/")}
+          onClick={() => navigate("/home")}
           aria-label="Back to Home"
           title="Back to Home"
           className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-primary-foreground/30 px-2.5 py-1.5 text-xs font-semibold transition-colors hover:bg-primary-foreground/10"

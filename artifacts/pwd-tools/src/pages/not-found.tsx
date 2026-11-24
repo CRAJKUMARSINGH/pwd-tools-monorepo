@@ -18,7 +18,7 @@ export default function NotFound() {
             The page you're looking for doesn't exist or has been moved.
           </p>
           <button
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/home")}
             className="mt-6 w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg font-semibold text-sm hover:bg-primary/90 transition-colors"
           >
             <Home size={16} />

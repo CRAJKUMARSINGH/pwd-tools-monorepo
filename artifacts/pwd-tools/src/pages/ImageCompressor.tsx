@@ -359,7 +359,7 @@ export default function ImageCompressor() {
           <div style={{ position: "relative", zIndex: 1, textAlign: "center", padding: "28px 24px 18px" }}>
             {/* Back button */}
             <button
-              onClick={() => navigate("/")}
+              onClick={() => navigate("/home")}
               style={{ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%)", background: "rgba(255,255,255,0.15)", border: "1.5px solid #FFD700", borderRadius: "8px", color: "#FFD700", padding: "6px 14px", cursor: "pointer", fontWeight: 700, fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "6px" }}
             >
               ← वापस

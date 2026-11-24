@@ -351,7 +351,7 @@ export default function SpeedMoneyForm() {
                     <Diyas />
                     <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", padding: "10px 20px 6px", gap: "12px" }}>
                         <button
-                            onClick={() => navigate("/")}
+                            onClick={() => navigate("/home")}
                             style={{ background: "rgba(255,215,0,0.18)", border: "1.5px solid #FFD700", color: "#FFD700", padding: "6px 14px", borderRadius: "6px", cursor: "pointer", fontWeight: 700, fontSize: "0.875rem", flexShrink: 0 }}
                         >
                             🏠 Home
