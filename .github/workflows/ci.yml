@@ -8,17 +8,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
-          cache: pnpm
 
-      - run: pnpm install --no-frozen-lockfile
+      - name: Install pnpm
+        run: npm install -g pnpm@10.33.0
 
-      # typecheck and lint are skipped — 234 pre-existing TS errors from
-      # Radix UI / React-19 typing drift block the gate without being our bug.
-      # Tracked in .kiro/steering/known-issues.md.
-      - run: pnpm --filter @workspace/pwd-tools build
-      - run: pnpm --filter @workspace/scripts test:smoke
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      # typecheck and lint skipped — 234 pre-existing TS errors from
+      # Radix UI / React-19 typing drift. Tracked in known-issues.md.
+      - name: Build
+        run: pnpm --filter @workspace/pwd-tools build
+
+      - name: Smoke tests
+        run: pnpm --filter @workspace/scripts test:smoke
