@@ -111,15 +111,13 @@ function BillOutput({ calculation }: { calculation: Ifms30BillCalculation }) {
     };
     const labelCell: React.CSSProperties = {
         ...cellBase,
-        width: "66%",
         fontWeight: 600,
         background: "#f5f5f5",
     };
     const valueCell: React.CSSProperties = {
         ...cellBase,
-        width: "34%",
         textAlign: "right",
-        whiteSpace: "nowrap",
+        overflowWrap: "anywhere",
     };
 
     const renderRow = ([label, value]: OutputRow, index: number, emphasized = false) => (
@@ -140,6 +138,10 @@ function BillOutput({ calculation }: { calculation: Ifms30BillCalculation }) {
         >
             <div>
                 <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
+                    <colgroup>
+                        <col />
+                        <col style={{ width: "25%" }} />
+                    </colgroup>
                     <thead>
                         <tr>
                             <td
@@ -405,10 +407,13 @@ export default function Ifms30BillInput() {
           box-shadow: 0 0 0 3px rgba(230, 168, 23, 0.22);
         }
         .ifms-workspace {
-          grid-template-columns: minmax(0, 1fr);
-        }
-        @media (min-width: 1024px) {
-          .ifms-workspace { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+          display: grid;
+          grid-template-columns: minmax(280px, 1fr) minmax(320px, 1fr);
+          gap: 18px;
+          max-width: 1400px;
+          margin: 0 auto;
+          padding: 18px;
+          overflow-x: auto;
         }
       `}</style>
 
@@ -426,7 +431,7 @@ export default function Ifms30BillInput() {
                     <div style={{ height: "3px", background: "linear-gradient(90deg, #ffd700, #ff8c00, #ffd700)" }} />
                 </div>
 
-                <div className="ifms-workspace" style={{ display: "grid", gap: "18px", maxWidth: "1400px", margin: "0 auto", padding: "18px" }}>
+                <div className="ifms-workspace">
                     <div>
                         <div className="ifms-section">
                             <h2 style={{ marginBottom: "12px", borderBottom: "1px solid #f48fb1", paddingBottom: "6px", color: "#880e4f", fontSize: "0.95rem", fontWeight: 700 }}>
