@@ -380,12 +380,12 @@ export default function Ifms30BillInput() {
           background: linear-gradient(135deg, #fffdf5 0%, #fff7e6 100%);
           border: 1.5px solid #e6a817;
           border-radius: 14px;
-          padding: 16px;
+          padding: 12px 16px;
           box-shadow: 0 2px 12px rgba(200, 130, 0, 0.1);
         }
         .ifms-label {
           display: block;
-          margin-bottom: 4px;
+          margin-bottom: 2px;
           color: #7b2d00;
           font-size: 0.78rem;
           font-weight: 700;
@@ -434,10 +434,10 @@ export default function Ifms30BillInput() {
                 <div className="ifms-workspace">
                     <div>
                         <div className="ifms-section">
-                            <h2 style={{ marginBottom: "12px", borderBottom: "1px solid #f48fb1", paddingBottom: "6px", color: "#880e4f", fontSize: "0.95rem", fontWeight: 700 }}>
+                            <h2 style={{ marginBottom: "6px", borderBottom: "1px solid #f48fb1", paddingBottom: "4px", color: "#880e4f", fontSize: "0.95rem", fontWeight: 700 }}>
                                 राशि
                             </h2>
-                            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "12px" }}>
+                            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "8px" }}>
                                 <div>
                                     <label className="ifms-label" htmlFor="ifms-work-order">1. कुल कार्यादेश राशि (रु.)</label>
                                     <input id="ifms-work-order" className="ifms-input" type="number" min="0" step="0.01" inputMode="decimal" value={form.totalWorkOrderAmount} onChange={(event) => updateField("totalWorkOrderAmount", event.target.value)} placeholder="0" />
@@ -453,12 +453,14 @@ export default function Ifms30BillInput() {
                             </div>
                         </div>
 
-                        <div className="ifms-section" style={{ marginTop: "16px" }}>
-                            <h2 style={{ marginBottom: "8px", borderBottom: "1px solid #f48fb1", paddingBottom: "6px", color: "#880e4f", fontSize: "0.95rem", fontWeight: 700 }}>
-                                कटौतियाँ
-                            </h2>
-                            <div className="ifms-label">खनन रॉयल्टी — विकल्प चुनें</div>
-                            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "8px" }}>
+                        <div className="ifms-section" style={{ marginTop: "8px" }}>
+                            <div style={{ display: "flex", alignItems: "baseline", flexWrap: "wrap", gap: "4px 8px", marginBottom: "6px", borderBottom: "1px solid #f48fb1", paddingBottom: "4px" }}>
+                                <h2 style={{ margin: 0, color: "#880e4f", fontSize: "0.95rem", fontWeight: 700, whiteSpace: "nowrap" }}>
+                                    कटौतियाँ
+                                </h2>
+                                <div className="ifms-label" style={{ marginBottom: 0 }}>खनन रॉयल्टी — विकल्प चुनें</div>
+                            </div>
+                            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "6px" }}>
                                 {MINING_OPTIONS.map((option) => {
                                     const active = form.miningRoyaltyOption === option.value;
                                     return (
@@ -486,25 +488,20 @@ export default function Ifms30BillInput() {
                                     );
                                 })}
                             </div>
-                            {form.miningRoyaltyOption !== "A0" && calculation.thisBillAmount > 0 && (
-                                <p style={{ marginTop: "9px", color: "#b71c1c", fontSize: "0.76rem", fontWeight: 700 }}>
-                                    खनन रॉयल्टी: रु. {formatAmount(calculation.miningRoyalty)} | डीएफएमटी: रु. {formatAmount(calculation.dfmt)}
-                                </p>
-                            )}
-                            <div style={{ marginTop: "12px" }}>
+                            <div style={{ marginTop: "6px" }}>
                                 <label className="ifms-label" htmlFor="ifms-dep-v">जमा-वी / एम.डी. (रु.)</label>
                                 <input id="ifms-dep-v" className="ifms-input" type="number" min="0" step="0.01" inputMode="decimal" value={form.depV} onChange={(event) => updateField("depV", event.target.value)} />
                             </div>
                         </div>
 
-                        <div className="ifms-section" style={{ marginTop: "16px" }}>
-                            <h2 style={{ marginBottom: "12px", borderBottom: "1px solid #f48fb1", paddingBottom: "6px", color: "#880e4f", fontSize: "0.95rem", fontWeight: 700 }}>
+                        <div className="ifms-section" style={{ marginTop: "8px" }}>
+                            <h2 style={{ marginBottom: "6px", borderBottom: "1px solid #f48fb1", paddingBottom: "4px", color: "#880e4f", fontSize: "0.95rem", fontWeight: 700 }}>
                                 मद वार विभाजन
                             </h2>
                             <YesNoSelect id="ifms-bifurcation" label="क्या Budget Headwise विभाजन आवश्यक है?" value={form.headWiseBifurcation} onChange={(value) => updateField("headWiseBifurcation", value)} />
                         </div>
 
-                        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "10px", marginTop: "16px" }}>
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "10px", marginTop: "8px" }}>
                             <button type="button" disabled={exporting !== null} onClick={downloadPdf} style={{ border: "none", borderRadius: "10px", background: "#880e4f", color: "#fff", padding: "12px", fontWeight: 700, cursor: exporting ? "wait" : "pointer", opacity: exporting ? 0.65 : 1 }}>
                                 {exporting === "pdf" ? "Preparing PDF..." : "PDF DOWNLOAD"}
                             </button>
