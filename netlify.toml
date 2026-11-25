@@ -1,12 +1,14 @@
 [build]
-  # Install from the repository root so pnpm can link workspace packages.
+  # dist/public is pre-built and committed (see .gitignore) and Netlify serves
+  # it directly. Keeping the build step empty makes deploys deterministic: a
+  # server-side pnpm/vite build that fails silently freezes the deploy on the
+  # last successful one. To ship a change, rebuild dist locally and commit it.
   base    = "."
-  command = "pnpm --filter @workspace/pwd-tools build"
+  command = ""
   publish = "artifacts/pwd-tools/dist/public"
 
 [build.environment]
   NODE_ENV = "production"
-  PNPM_FLAGS = "--filter=@workspace/pwd-tools... --frozen-lockfile --prod=false"
 
 [[redirects]]
   from   = "/*"
