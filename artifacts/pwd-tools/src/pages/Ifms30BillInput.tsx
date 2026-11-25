@@ -79,18 +79,21 @@ function YesNoSelect({
     label,
     value,
     onChange,
+    hideLabel = false,
 }: {
     id: string;
     label: string;
     value: YesNo;
     onChange: (value: YesNo) => void;
+    hideLabel?: boolean;
 }) {
     return (
         <div>
-            <label className="ifms-label" htmlFor={id}>{label}</label>
+            {!hideLabel && <label className="ifms-label" htmlFor={id}>{label}</label>}
             <select
                 id={id}
                 className="ifms-input"
+                aria-label={label}
                 value={value}
                 onChange={(event) => onChange(event.target.value as YesNo)}
             >
@@ -120,10 +123,13 @@ function BillOutput({ calculation }: { calculation: Ifms30BillCalculation }) {
         overflowWrap: "anywhere",
     };
 
+    // Column 2 shows bare amounts — the "Rs." unit is declared once in the table header.
+    const withoutRupeePrefix = (value: string) => value.replace(/^Rs\.\s*/, "");
+
     const renderRow = ([label, value]: OutputRow, index: number, emphasized = false) => (
         <tr key={`${label}-${index}`}>
             <td style={{ ...labelCell, ...(emphasized ? { background: "#fff4cf" } : {}) }}>{label}</td>
-            <td style={{ ...valueCell, ...(emphasized ? { background: "#fff4cf", fontWeight: 700 } : {}) }}>{value}</td>
+            <td style={{ ...valueCell, ...(emphasized ? { background: "#fff4cf", fontWeight: 700 } : {}) }}>{withoutRupeePrefix(value)}</td>
         </tr>
     );
 
@@ -137,10 +143,10 @@ function BillOutput({ calculation }: { calculation: Ifms30BillCalculation }) {
             }}
         >
             <div>
-                <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
+                <table style={{ width: "62.5%", borderCollapse: "collapse", tableLayout: "fixed" }}>
                     <colgroup>
                         <col />
-                        <col style={{ width: "25%" }} />
+                        <col style={{ width: "28.125%" }} />
                     </colgroup>
                     <thead>
                         <tr>
@@ -182,7 +188,7 @@ function BillOutput({ calculation }: { calculation: Ifms30BillCalculation }) {
                         )}
                     </tbody>
                 </table>
-                <div style={{ border: "1px solid #666", borderTop: "none", padding: "8px 10px" }}>
+                <div style={{ width: "62.5%", border: "1px solid #666", borderTop: "none", padding: "8px 10px" }}>
                     {calculation.notePoints.map((point) => (
                         <div key={point} style={{ fontSize: "12px", lineHeight: 1.5 }}>{point}</div>
                     ))}
@@ -451,10 +457,8 @@ export default function Ifms30BillInput() {
                                     <input id="ifms-this-bill" className="ifms-input" type="number" min="0" step="0.01" inputMode="decimal" value={form.amountThisBill} onChange={(event) => updateField("amountThisBill", event.target.value)} placeholder="0" />
                                 </div>
                             </div>
-                        </div>
 
-                        <div className="ifms-section" style={{ marginTop: "8px" }}>
-                            <div style={{ display: "flex", alignItems: "baseline", flexWrap: "wrap", gap: "4px 8px", marginBottom: "6px", borderBottom: "1px solid #f48fb1", paddingBottom: "4px" }}>
+                            <div style={{ display: "flex", alignItems: "baseline", flexWrap: "wrap", gap: "4px 8px", marginTop: "10px", borderTop: "1px solid #f48fb1", paddingTop: "6px" }}>
                                 <h2 style={{ margin: 0, color: "#880e4f", fontSize: "0.95rem", fontWeight: 700, whiteSpace: "nowrap" }}>
                                     कटौतियाँ
                                 </h2>
@@ -492,22 +496,23 @@ export default function Ifms30BillInput() {
                                 <label className="ifms-label" htmlFor="ifms-dep-v">जमा-वी / एम.डी. (रु.)</label>
                                 <input id="ifms-dep-v" className="ifms-input" type="number" min="0" step="0.01" inputMode="decimal" value={form.depV} onChange={(event) => updateField("depV", event.target.value)} />
                             </div>
-                        </div>
 
-                        <div className="ifms-section" style={{ marginTop: "8px" }}>
-                            <h2 style={{ marginBottom: "6px", borderBottom: "1px solid #f48fb1", paddingBottom: "4px", color: "#880e4f", fontSize: "0.95rem", fontWeight: 700 }}>
-                                मद वार विभाजन
-                            </h2>
-                            <YesNoSelect id="ifms-bifurcation" label="क्या Budget Headwise विभाजन आवश्यक है?" value={form.headWiseBifurcation} onChange={(value) => updateField("headWiseBifurcation", value)} />
-                        </div>
+                            <div style={{ display: "flex", alignItems: "baseline", flexWrap: "wrap", gap: "4px 8px", marginTop: "10px", borderTop: "1px solid #f48fb1", paddingTop: "6px" }}>
+                                <h2 style={{ margin: 0, color: "#880e4f", fontSize: "0.95rem", fontWeight: 700, whiteSpace: "nowrap" }}>
+                                    मद वार विभाजन
+                                </h2>
+                                <div className="ifms-label" style={{ marginBottom: 0 }}>(क्या Budget Headwise विभाजन आवश्यक है?)</div>
+                            </div>
+                            <YesNoSelect id="ifms-bifurcation" hideLabel label="क्या Budget Headwise विभाजन आवश्यक है?" value={form.headWiseBifurcation} onChange={(value) => updateField("headWiseBifurcation", value)} />
 
-                        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "10px", marginTop: "8px" }}>
+                            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "10px", marginTop: "10px" }}>
                             <button type="button" disabled={exporting !== null} onClick={downloadPdf} style={{ border: "none", borderRadius: "10px", background: "#880e4f", color: "#fff", padding: "12px", fontWeight: 700, cursor: exporting ? "wait" : "pointer", opacity: exporting ? 0.65 : 1 }}>
                                 {exporting === "pdf" ? "Preparing PDF..." : "PDF DOWNLOAD"}
                             </button>
                             <button type="button" disabled={exporting !== null} onClick={downloadImage} style={{ border: "2px solid #e67e22", borderRadius: "10px", background: "#fff8e1", color: "#7b2d00", padding: "12px", fontWeight: 700, cursor: exporting ? "wait" : "pointer", opacity: exporting ? 0.65 : 1 }}>
                                 {exporting === "image" ? "Preparing Image..." : "IMAGE DOWNLOAD"}
                             </button>
+                        </div>
                         </div>
                     </div>
 
