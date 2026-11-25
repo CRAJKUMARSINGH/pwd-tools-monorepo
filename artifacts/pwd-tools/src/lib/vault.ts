@@ -20,6 +20,7 @@ export interface VaultSnapshot {
   label: string;         // human-readable e.g. "Charbhuja • Agr 17 • 3 Running"
   savedAt: string;       // ISO timestamp
   data: unknown;         // the full form/state snapshot
+  kind?: "autosave";
 }
 
 // ── Dexie DB ─────────────────────────────────────────────────────────────
@@ -70,6 +71,15 @@ export async function saveSnapshot(
   });
 }
 
+/** Keep one rolling recovery copy while the user types. Named snapshots remain separate. */
+export function saveDraftSnapshot(tool: VaultTool, label: string, data: unknown): Promise<void> {
+  return db.transaction("rw", db.snapshots, async () => {
+    const existing = await db.snapshots.where("tool").equals(tool).and((row) => row.kind === "autosave").first();
+    const snapshot = { tool, label, data, savedAt: new Date().toISOString(), kind: "autosave" as const };
+    await db.snapshots.put(existing?.id === undefined ? snapshot : { ...snapshot, id: existing.id });
+  });
+}
+
 /** Load all snapshots for a tool, newest first. */
 export async function loadSnapshots(tool: string): Promise<VaultSnapshot[]> {
   return db.snapshots
@@ -106,9 +116,18 @@ export async function exportAllAsJson(): Promise<string> {
  * Returns the count of records imported.
  */
 export async function importFromJson(jsonStr: string): Promise<number> {
-  const parsed = JSON.parse(jsonStr) as { snapshots?: VaultSnapshot[] };
+  const parsed = JSON.parse(jsonStr) as { snapshots?: unknown };
   if (!Array.isArray(parsed?.snapshots)) throw new Error("Invalid vault export file.");
-  const records = parsed.snapshots.map(({ id: _, ...rest }) => rest); // strip old ids
-  await db.snapshots.bulkAdd(records as VaultSnapshot[]);
+  const records = parsed.snapshots.map((record, index): VaultSnapshot => {
+    if (!record || typeof record !== "object" || typeof record.tool !== "string" || !record.tool.trim() ||
+      typeof record.label !== "string" || typeof record.savedAt !== "string" ||
+      !Number.isFinite(Date.parse(record.savedAt)) || !Object.hasOwn(record, "data")) {
+      throw new Error(`Invalid snapshot at position ${index + 1}.`);
+    }
+    // Imported recovery copies are independent snapshots, with new IDs.
+    const { tool, label, savedAt, data } = record;
+    return { tool, label, savedAt, data };
+  });
+  await db.transaction("rw", db.snapshots, () => db.snapshots.bulkAdd(records));
   return records.length;
 }

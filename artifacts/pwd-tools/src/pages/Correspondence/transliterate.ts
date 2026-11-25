@@ -138,3 +138,12 @@ export function convertLastWord(fullText: string): string {
     if (/[\u0900-\u097F]/.test(lastWord)) return fullText; // already Hindi
     return prefix + transliterateWord(lastWord) + space;
 }
+
+/** Insert punctuation or whitespace at the caret and convert the word just typed. */
+export function convertAtCaret(value: string, start: number, end: number, separator: string) {
+    const before = value.slice(0, start);
+    const converted = convertLastWord(before + " ").slice(0, -1);
+    if (converted === before) return null;
+    const prefix = converted + separator;
+    return { value: prefix + value.slice(end), caret: prefix.length };
+}

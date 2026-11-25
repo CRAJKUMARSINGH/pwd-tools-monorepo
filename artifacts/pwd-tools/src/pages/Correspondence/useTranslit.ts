@@ -13,7 +13,7 @@
  */
 
 import { useRef } from "react";
-import { convertLastWord } from "./transliterate";
+import { convertAtCaret } from "./transliterate";
 
 export interface TranslitBindings {
     value: string;
@@ -28,43 +28,38 @@ export function useTranslit(
     value: string,
     onChange: (v: string) => void,
 ): TranslitBindings {
-    // keep the last pre-conversion snapshot so Ctrl+Z can undo
-    const prevRef = useRef<string | null>(null);
+    const prevRef = useRef<{ before: string; after: string; start: number; end: number } | null>(null);
 
     function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
+        prevRef.current = null;
         onChange(e.target.value);
     }
 
     function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) {
-        if (!enabled) return;
+        if (!enabled || e.nativeEvent.isComposing) return;
+        const input = e.currentTarget;
+        const restore = prevRef.current;
 
         // Ctrl+Z → undo last conversion
-        if ((e.ctrlKey || e.metaKey) && e.key === "z" && prevRef.current !== null) {
+        if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key === "z" && restore?.after === value) {
             e.preventDefault();
-            onChange(prevRef.current);
             prevRef.current = null;
+            onChange(restore.before);
+            requestAnimationFrame(() => input.setSelectionRange(restore.start, restore.end));
             return;
         }
 
-        // Trigger conversion on Space, Enter, or । (Devanagari danda)
-        if (e.key === " " || e.key === "Enter" || e.key === "।") {
-            const el = e.currentTarget;
-            // Append the trigger character first so convertLastWord sees it
-            const next = value + e.key;
-            const converted = convertLastWord(next);
-            if (converted !== next) {
-                e.preventDefault();
-                prevRef.current = value; // save undo snapshot
-                // Restore cursor after the converted word + the trigger char
-                const newVal = converted;
-                onChange(newVal);
-                // Re-position cursor at end (for textarea with cursor in middle: best-effort)
-                requestAnimationFrame(() => {
-                    el.selectionStart = el.selectionEnd = newVal.length;
-                });
-            }
-            // If nothing changed, let the browser handle the keystroke normally
-        }
+        if (e.ctrlKey || e.metaKey || e.altKey) return;
+        const separator = e.key === "Enter" && input.tagName === "TEXTAREA" ? "\n" : e.key;
+        if (separator !== " " && separator !== "\n" && separator !== "।") return;
+        const start = input.selectionStart ?? value.length;
+        const end = input.selectionEnd ?? start;
+        const edit = convertAtCaret(value, start, end, separator);
+        if (!edit) return;
+        e.preventDefault();
+        prevRef.current = { before: value, after: edit.value, start, end };
+        onChange(edit.value);
+        requestAnimationFrame(() => input.setSelectionRange(edit.caret, edit.caret));
     }
 
     return {

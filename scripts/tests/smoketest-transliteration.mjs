@@ -147,7 +147,9 @@ console.log(`\n   Result: "${sentence1}"`);
 
 console.log('\n── localStorage key names ──────────────────────────────────────');
 const pageSrc = readFileSync('artifacts/pwd-tools/src/pages/AuditReply/AuditWorkspace.tsx', 'utf8');
-check('audit-reply-data key used', pageSrc.includes("'audit-reply-data'"));
+const storageSrc = readFileSync('artifacts/pwd-tools/src/lib/audit-drafts.ts', 'utf8');
+check('audit-reply-data key used', storageSrc.includes('REPLIES_KEY = "audit-reply-data"') &&
+  pageSrc.includes("localStorage.getItem(REPLIES_KEY)") && pageSrc.includes("localStorage.setItem(REPLIES_KEY,"));
 check('audit-extra-rows key used', pageSrc.includes("'audit-extra-rows'"));
 
 console.log('\n── NewRowForm fields ───────────────────────────────────────────');

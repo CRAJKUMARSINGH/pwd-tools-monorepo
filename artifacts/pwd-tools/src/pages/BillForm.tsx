@@ -527,7 +527,6 @@ export default function BillForm({ mode = "bill-note" }: BillFormProps) {
       // eslint-disable-next-line react-hooks/purity
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       label: getRecentInputLabel(form),
-      // eslint-disable-next-line react-hooks/purity
       savedAt: new Date().toLocaleString(),
       form: { ...form, contractorSearch: "" },
     };

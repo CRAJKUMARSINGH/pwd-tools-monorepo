@@ -1,12 +1,12 @@
 import { ArrowLeft, Trash2, Upload } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { UploadedInput } from "./types";
 
 type Props = {
   /** Back to the landing step. */
   onBack: () => void;
   /** Hand the picked images to the workspace (each becomes one fresh para). */
-  onDone: (inputs: UploadedInput[]) => void;
+  onDone: (inputs: UploadedInput[], signal: AbortSignal) => Promise<void>;
 };
 
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -23,7 +23,11 @@ export default function AuditUploadStep({ onBack, onDone }: Props) {
   const [inputs, setInputs] = useState<UploadedInput[]>([]);
   const [rejected, setRejected] = useState(0);
   const [busy, setBusy] = useState(false);
+  const [opening, setOpening] = useState(false);
+  const [openError, setOpenError] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const openRequest = useRef<AbortController | null>(null);
+  useEffect(() => () => openRequest.current?.abort(), []);
 
   const readAsDataUrl = (file: File) =>
     new Promise<UploadedInput>((resolve) => {
@@ -50,6 +54,22 @@ export default function AuditUploadStep({ onBack, onDone }: Props) {
 
   const remove = (id: string) => setInputs((prev) => prev.filter((p) => p.id !== id));
 
+  async function openWorkspace() {
+    if (openRequest.current) return;
+    const request = new AbortController();
+    openRequest.current = request;
+    setOpening(true);
+    setOpenError(false);
+    try {
+      await onDone(inputs, request.signal);
+    } catch {
+      if (!request.signal.aborted) setOpenError(true);
+    } finally {
+      openRequest.current = null;
+      if (!request.signal.aborted) setOpening(false);
+    }
+  }
+
   return (
     <div className="mx-auto w-full max-w-3xl px-4 py-8">
       <div className="mb-6">
@@ -69,19 +89,16 @@ export default function AuditUploadStep({ onBack, onDone }: Props) {
         विवरण एवं उत्तर भरें।
       </p>
 
-      <div
-        role="button"
-        tabIndex={0}
+      <button
+        type="button"
+        disabled={opening}
         onClick={() => fileRef.current?.click()}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") fileRef.current?.click();
-        }}
-        className="mt-5 flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed border-primary/40 bg-muted/30 px-6 py-10 text-center transition-colors hover:border-primary hover:bg-muted/50"
+        className="mt-5 flex w-full cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed border-primary/40 bg-muted/30 px-6 py-10 text-center transition-colors hover:border-primary hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-primary"
       >
         <Upload className="h-7 w-7 text-primary" aria-hidden="true" />
         <span className="text-sm font-semibold">तस्वीरें चुनें / Click to select images</span>
         <span className="text-xs text-muted-foreground">JPG / PNG / WEBP — एक से अधिक चुन सकते हैं</span>
-      </div>
+      </button>
       <input
         ref={fileRef}
         type="file"
@@ -127,8 +144,8 @@ export default function AuditUploadStep({ onBack, onDone }: Props) {
       <div className="mt-6 flex flex-wrap gap-2">
         <button
           type="button"
-          disabled={busy || inputs.length === 0}
-          onClick={() => onDone(inputs)}
+          disabled={busy || opening || inputs.length === 0}
+          onClick={openWorkspace}
           className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
         >
           कार्यक्षेत्र खोलें / Continue
@@ -136,12 +153,17 @@ export default function AuditUploadStep({ onBack, onDone }: Props) {
         <button
           type="button"
           onClick={() => setInputs([])}
-          disabled={inputs.length === 0}
+          disabled={opening || inputs.length === 0}
           className="rounded-md border px-4 py-2 text-sm font-semibold hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
         >
           Clear
         </button>
       </div>
+      {openError && (
+        <p role="alert" className="mt-3 text-sm text-destructive">
+          कार्यक्षेत्र नहीं खुल सका। पिछला ड्राफ़्ट सुरक्षित है। फिर से प्रयास करें।
+        </p>
+      )}
     </div>
   );
 }

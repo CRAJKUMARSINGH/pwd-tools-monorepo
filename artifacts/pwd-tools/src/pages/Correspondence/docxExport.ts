@@ -2,9 +2,11 @@ import {
   AlignmentType,
   BorderStyle,
   Document,
+  LineRuleType,
   Packer,
   PageOrientation,
   Paragraph,
+  TabStopType,
   TextRun,
 } from "docx";
 import { saveAs } from "file-saver";
@@ -27,7 +29,7 @@ function p(
   return new Paragraph({
     children,
     alignment: opts.align ?? AlignmentType.JUSTIFIED,
-    spacing: { before: ZERO, after: ZERO, line: 276, lineRule: "auto" as any },
+    spacing: { before: ZERO, after: ZERO, line: 276, lineRule: LineRuleType.AUTO },
     ...(opts.indent ? { indent: opts.indent } : {}),
   });
 }
@@ -36,7 +38,7 @@ function p(
 function blankLine(): Paragraph {
   return new Paragraph({
     children: [],
-    spacing: { before: ZERO, after: ZERO, line: 276, lineRule: "auto" as any },
+    spacing: { before: ZERO, after: ZERO, line: 276, lineRule: LineRuleType.AUTO },
   });
 }
 
@@ -127,8 +129,8 @@ export async function exportLetterAsDocx(letter: Letter): Promise<void> {
                 t(`${english ? "Date:" : "दिनांकः"} ${letter.date}`),
               ],
               alignment: AlignmentType.LEFT,
-              spacing: { before: ZERO, after: ZERO, line: 276, lineRule: "auto" as any },
-              tabStops: [{ type: "right" as any, position: A4_WIDTH_TWIPS - MARGIN_TWIPS * 2 }],
+              spacing: { before: ZERO, after: ZERO, line: 276, lineRule: LineRuleType.AUTO },
+              tabStops: [{ type: TabStopType.RIGHT, position: A4_WIDTH_TWIPS - MARGIN_TWIPS * 2 }],
             }),
             blankLine(),
 
@@ -177,7 +179,7 @@ export async function exportLetterAsDocx(letter: Letter): Promise<void> {
                 new Paragraph({
                   children: [],
                   border: { top: { style: BorderStyle.SINGLE, size: 6, color: "000000" } },
-                  spacing: { before: ZERO, after: ZERO, line: 276, lineRule: "auto" as any },
+                  spacing: { before: ZERO, after: ZERO, line: 276, lineRule: LineRuleType.AUTO },
                 }),
                 p([t(english ? "Copy to:" : "प्रतिलिपि सूचनार्थ एवं आवश्यक कार्यवाही हेतु प्रेषित:", { bold: true })],
                   { align: AlignmentType.LEFT }),
@@ -197,7 +199,7 @@ export async function exportLetterAsDocx(letter: Letter): Promise<void> {
               ...paragraphs,
               new Paragraph({
                 pageBreakBefore: true,
-                spacing: { before: ZERO, after: ZERO, line: 276, lineRule: "auto" as any },
+                spacing: { before: ZERO, after: ZERO, line: 276, lineRule: LineRuleType.AUTO },
               }),
             ]
             : paragraphs;

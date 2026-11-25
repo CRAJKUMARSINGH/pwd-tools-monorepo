@@ -61,36 +61,14 @@
             color: #2E8B57;
         }
     </style>
-    <script>
-        function calculateStampDuty() {
-            let workOrderAmount = parseFloat(document.getElementById("workOrderAmount").value);
-            
-            if (isNaN(workOrderAmount) || workOrderAmount <= 0) {
-                document.getElementById("result").innerHTML = "Please enter a valid amount";
-                return;
-            }
-
-            let stampDuty;
-
-            if (workOrderAmount <= 5000000) {
-                stampDuty = 1000;
-            } else {
-                stampDuty = Math.round(workOrderAmount * 0.0015);
-                if (stampDuty > 2500000) {
-                    stampDuty = 2500000;
-                }
-            }
-
-            document.getElementById("result").innerHTML = "Stamp Duty: Rs. " + stampDuty.toLocaleString("en-IN");
-        }
-    </script>
+    <script src="./StampDuty.js"></script>
 </head>
 <body>
     <div class="container">
         <h2>Stamp Duty Calculator</h2>
         <label for="workOrderAmount">Enter Work Order Amount (Rs.):</label>
         <input type="number" id="workOrderAmount" min="0" step="1">
-        <button onclick="calculateStampDuty()">Calculate</button>
+        <button data-action="calculate">Calculate</button>
         <p id="result"></p>
     </div>
 </body>

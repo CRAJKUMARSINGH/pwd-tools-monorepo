@@ -1,0 +1,17 @@
+BEGIN;
+
+ALTER TABLE correspondence_letters
+  ADD COLUMN IF NOT EXISTS language text NOT NULL DEFAULT 'hindi',
+  ADD COLUMN IF NOT EXISTS to_name_en text NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS to_designation_en text NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS to_office_en text NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS subject_en text NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS reference_en text NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS body_en text NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS from_name_en text NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS from_designation_en text NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS from_office_en text NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS cc_en text NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS to_many text NOT NULL DEFAULT '';
+
+COMMIT;

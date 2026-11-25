@@ -28,11 +28,13 @@ import {
   LegalCreateLetterBody,
   LegalGetLetterParams,
   LegalUpdateLetterParams,
+  LegalUpdateLetterBody,
   LegalDeleteLetterParams,
   LegalFinalizeLetterParams,
   LegalCreateStyleBody,
   LegalGetStyleParams,
   LegalUpdateStyleParams,
+  LegalUpdateStyleBody,
   LegalDeleteStyleParams,
 } from "@workspace/api-zod";
 

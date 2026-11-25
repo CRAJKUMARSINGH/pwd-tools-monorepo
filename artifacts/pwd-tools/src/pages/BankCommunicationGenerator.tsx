@@ -244,6 +244,8 @@ function buildExtensionHtml(d: BankCommunicationData): string {
   </div>`;
 }
 
+// Retained for the bank-letter contract tests while this template is unavailable.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function buildBankExtensionHtml(d: BankCommunicationData): string {
   return `
   ${officeHeaderHtml(d)}
@@ -667,6 +669,8 @@ function ExtensionPreview({ d }: { d: BankCommunicationData }) {
   );
 }
 
+// Retained with the print version of the bank extension template.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function BankExtensionPreview({ d }: { d: BankCommunicationData }) {
   return (
     <>
@@ -947,6 +951,7 @@ export default function BankCommunicationGenerator() {
                 variant="secondary"
                 size="sm"
                 onClick={() => setShowArchive(v => !v)}
+                aria-expanded={showArchive}
                 title="Last 10 saved letters"
                 className="h-8 px-2 text-xs"
               >
@@ -972,6 +977,11 @@ export default function BankCommunicationGenerator() {
           </p>
         </div>
 
+        {showArchive && (
+          <div className="max-h-80 overflow-y-auto">
+            <ArchivePanel onRestore={handleRestore} onClose={() => setShowArchive(false)} />
+          </div>
+        )}
         <ScrollArea className="flex-1">
           <div className="p-4 space-y-6 pb-10">
             {/* Template selector */}

@@ -12,14 +12,31 @@ export const CorrListLettersQueryParams = zod.object({
   status: zod.enum(["draft", "final"]).optional(),
 });
 
-export const CorrGetLetterParams    = zod.object({ id: zod.coerce.number() });
-export const CorrUpdateLetterParams = zod.object({ id: zod.coerce.number() });
-export const CorrDeleteLetterParams = zod.object({ id: zod.coerce.number() });
-export const CorrGenerateDocxParams = zod.object({ id: zod.coerce.number() });
+const letterParams = zod.object({ id: zod.coerce.number().int().positive().max(2147483647) });
+export const CorrGetLetterParams    = letterParams;
+export const CorrUpdateLetterParams = letterParams;
+export const CorrDeleteLetterParams = letterParams;
+export const CorrGenerateDocxParams = letterParams;
 
 // ── Shared letter shape ───────────────────────────────────────────────────
 
+const bilingualFields = {
+  language:           zod.enum(["hindi", "english", "both"]).optional(),
+  toNameEn:           zod.string().optional(),
+  toDesignationEn:    zod.string().optional(),
+  toOfficeEn:         zod.string().optional(),
+  subjectEn:          zod.string().optional(),
+  referenceEn:        zod.string().optional(),
+  bodyEn:             zod.string().optional(),
+  fromNameEn:         zod.string().optional(),
+  fromDesignationEn:  zod.string().optional(),
+  fromOfficeEn:       zod.string().optional(),
+  ccEn:               zod.string().optional(),
+  toMany:             zod.string().optional(),
+};
+
 const CorrLetterRecord = zod.object({
+  ...bilingualFields,
   id:              zod.number(),
   type:            zod.enum(["new", "reply"]),
   status:          zod.enum(["draft", "final"]),
@@ -65,6 +82,7 @@ export const CorrGenerateDocxResponse = zod.object({
 // ── Request bodies ────────────────────────────────────────────────────────
 
 export const CorrCreateLetterBody = zod.object({
+  ...bilingualFields,
   type:            zod.enum(["new", "reply"]),
   status:          zod.enum(["draft", "final"]).optional(),
   letterNumber:    zod.string(),
@@ -81,22 +99,10 @@ export const CorrCreateLetterBody = zod.object({
   cc:              zod.string().optional(),
 });
 
-export const CorrUpdateLetterBody = zod.object({
-  type:            zod.enum(["new", "reply"]).optional(),
-  status:          zod.enum(["draft", "final"]).optional(),
-  letterNumber:    zod.string().optional(),
-  date:            zod.string().optional(),
-  toName:          zod.string().optional(),
-  toDesignation:   zod.string().optional(),
-  toOffice:        zod.string().optional(),
-  subject:         zod.string().optional(),
-  reference:       zod.string().optional(),
-  body:            zod.string().optional(),
-  fromName:        zod.string().optional(),
-  fromDesignation: zod.string().optional(),
-  fromOffice:      zod.string().optional(),
-  cc:              zod.string().optional(),
-});
+export const CorrUpdateLetterBody = CorrCreateLetterBody.partial().refine(
+  (fields) => Object.keys(fields).length > 0,
+  "Provide at least one letter field to update.",
+);
 
 // ── Inferred types ────────────────────────────────────────────────────────
 

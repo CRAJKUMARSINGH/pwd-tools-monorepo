@@ -1,9 +1,12 @@
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
-import BankCommunication from "@/pages/BankCommunication";
-import BillForm from "@/pages/BillForm";
-import ContractorRegistration from "@/pages/ContractorRegistration";
-import EnrollmentDataForm from "@/pages/EnrollmentDataForm";
+import { lazy } from "react";
 import { useLocation, useParams } from "wouter";
+
+const TOOL_COMPONENTS = {
+  "contractor-registration": lazy(() => import("@/pages/ContractorRegistration")),
+  "bank-communication": lazy(() => import("@/pages/BankCommunication")),
+  "hindi-bill-note-sheet": lazy(() => import("@/pages/BillForm")),
+};
 
 const TOOL_MAP: Record<string, { name: string; icon: string; htmlFile: string | null }> = {
   "bill-generator": { name: "Bill Generator", icon: "🏗️", htmlFile: "BillGenerator.html" },
@@ -44,11 +47,13 @@ function DiyasBar() {
 }
 
 export default function ToolViewer() {
-  useDocumentTitle("Tool Viewer");
   const { id } = useParams<{ id: string }>();
   const [, navigate] = useLocation();
-
-  const tool = TOOL_MAP[id ?? ""];
+  const tool = id && Object.hasOwn(TOOL_MAP, id) ? TOOL_MAP[id] : undefined;
+  useDocumentTitle(tool?.name ?? "Tool not found");
+  const ToolComponent = id && Object.hasOwn(TOOL_COMPONENTS, id)
+    ? TOOL_COMPONENTS[id as keyof typeof TOOL_COMPONENTS]
+    : undefined;
 
   if (!tool) {
     return (
@@ -74,7 +79,7 @@ export default function ToolViewer() {
           100% { background-position: 200% center; }
         }
       `}</style>
-      <div style={{ display: "flex", flexDirection: "column", height: "100vh", fontFamily: "'Segoe UI',sans-serif" }}>
+      <div style={{ display: "flex", flexDirection: "column", height: "100dvh", fontFamily: "'Segoe UI',sans-serif" }}>
 
         {/* Navratri Top Bar */}
         <div style={{
@@ -124,17 +129,9 @@ export default function ToolViewer() {
               style={{ width: "100%", height: "100%", border: "none" }}
               title={tool.name}
             />
-          ) : (
+          ) : ToolComponent && (
             <div style={{ height: "100%", overflowY: "auto" }}>
-              {(() => {
-                const componentMap: Record<string, React.ReactNode> = {
-                  "contractor-registration": <ContractorRegistration />,
-                  "bank-communication": <BankCommunication />,
-                  "enrollment-data-form": <EnrollmentDataForm />,
-                  "hindi-bill-note-sheet": <BillForm />,
-                };
-                return componentMap[id ?? ""] ?? <BillForm />;
-              })()}
+              <ToolComponent />
             </div>
           )}
         </div>

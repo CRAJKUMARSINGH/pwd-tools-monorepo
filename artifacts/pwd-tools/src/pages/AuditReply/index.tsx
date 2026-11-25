@@ -1,6 +1,6 @@
 import ToolShell from "@/components/ToolShell";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
-import type { FreshPara } from "@/hooks/useFreshParas";
+import { FRESH_KEY, REPLIES_KEY, hasFreshParaContent, readAuditReplies, readFreshParas, replaceFreshDraft, type FreshPara } from "@/lib/audit-drafts";
 import { FileText } from "lucide-react";
 import { useState } from "react";
 import AuditLanding from "./AuditLanding";
@@ -8,24 +8,15 @@ import AuditUploadStep from "./AuditUploadStep";
 import AuditWorkspace, { AuditWorkspaceTabs } from "./AuditWorkspace";
 import type { AuditStep, AuditTab, UploadedInput } from "./types";
 
-const REPLIES_KEY = "audit-reply-data";
-const FRESH_KEY = "audit-fresh-paras";
-
 type DraftSummary = { hasDraft: boolean; label?: string; tab: AuditTab };
 
 /** What localStorage already holds, so the landing can offer "resume". */
 function readDraftSummary(): DraftSummary {
   try {
-    const replies = JSON.parse(localStorage.getItem(REPLIES_KEY) || "{}") as Record<
-      string,
-      { reply?: string; comments?: string } | undefined
-    >;
-    const filled = Object.values(replies).filter((r) => r?.reply?.trim() || r?.comments?.trim()).length;
-
-    const fresh = JSON.parse(localStorage.getItem(FRESH_KEY) || "[]") as FreshPara[];
-    const freshFilled = fresh.filter(
-      (p) => p.header?.trim() || p.gist?.trim() || p.obs?.trim() || p.reply?.trim(),
-    ).length;
+    const replies = readAuditReplies(JSON.parse(localStorage.getItem(REPLIES_KEY) || "{}"));
+    const filled = Object.values(replies).filter((r) => r.reply.trim() || r.comments.trim()).length;
+    const fresh = readFreshParas(JSON.parse(localStorage.getItem(FRESH_KEY) || "[]"));
+    const freshFilled = fresh.filter(hasFreshParaContent).length;
 
     if (!filled && !freshFilled) return { hasDraft: false, tab: "existing" };
 
@@ -80,6 +71,7 @@ export default function AuditReplyPage() {
 
   return (
     <ToolShell
+      festive
       title="अंकेक्षण प्रतिवेदन उत्तर"
       subtitle="Audit Reply Tool — जिला प्रभाग II, उदयपुर"
       toolbar={inWorkspace && <AuditWorkspaceTabs tab={tab} onChange={setTab} />}
@@ -103,8 +95,11 @@ export default function AuditReplyPage() {
       ) : step === "upload" ? (
         <AuditUploadStep
           onBack={() => setStep("landing")}
-          onDone={(inputs) => {
-            setSeedFresh(toFreshParas(inputs));
+          onDone={async (inputs, signal) => {
+            const fresh = toFreshParas(inputs);
+            await replaceFreshDraft(fresh, signal);
+            if (signal.aborted) return;
+            setSeedFresh(fresh);
             setTab("fresh");
             setStep("workspace");
           }}

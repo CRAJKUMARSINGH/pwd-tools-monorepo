@@ -5,7 +5,7 @@
 import ToolShell from "@/components/ToolShell";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { usePrintPage } from "@/lib/printPage";
-import { AlignmentType, BorderStyle, Document, Packer, PageOrientation, Paragraph, TextRun } from "docx";
+import { AlignmentType, BorderStyle, Document, Packer, PageOrientation, Paragraph, TabStopType, TextRun } from "docx";
 import { saveAs } from "file-saver";
 import { ArrowLeft, Download, Gavel } from "lucide-react";
 import { useState } from "react";
@@ -72,7 +72,7 @@ export default function RescissionNoticePage() {
           new TextRun({ text: `दिनांकः ${form.date}`, font: FONT, size: 22 }),
         ],
         spacing: sp,
-        tabStops: [{ type: "right" as any, position: A4_W - MAR * 2 }],
+        tabStops: [{ type: TabStopType.RIGHT, position: A4_W - MAR * 2 }],
       }),
       blank(),
       para("कार्यालय आदेश / OFFICE ORDER", AlignmentType.CENTER, undefined, true, 26),

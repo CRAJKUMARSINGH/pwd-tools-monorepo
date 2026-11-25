@@ -4,6 +4,7 @@
  * Requires VITE_API_URL to be set (shows error banner if not configured).
  */
 import ToolShell from "@/components/ToolShell";
+import OfficeApiAccess from "@/components/OfficeApiAccess";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -467,8 +468,6 @@ function StylesManager({ onNavigate }: { onNavigate: (v: LegalView) => void }) {
 
 export default function LegalCorrespondencePage() {
     useDocumentTitle("Legal Correspondence");
-    const [view, setView] = useState<LegalView>({ name: "dashboard" });
-
     if (!LEGAL_API_ENABLED) {
         return (
             <ToolShell title="Legal Correspondence">
@@ -487,11 +486,21 @@ export default function LegalCorrespondencePage() {
         );
     }
 
-    if (view.name === "dashboard") return <ToolShell title="Legal Correspondence"><Dashboard onNavigate={setView} /></ToolShell>;
-    if (view.name === "list") return <ToolShell title="Legal Correspondence"><LetterList onNavigate={setView} /></ToolShell>;
-    if (view.name === "new") return <ToolShell title="Legal Correspondence"><LetterFormView onNavigate={setView} /></ToolShell>;
-    if (view.name === "edit") return <ToolShell title="Legal Correspondence"><LetterFormView id={view.id} onNavigate={setView} /></ToolShell>;
-    if (view.name === "print") return <ToolShell title="Legal Correspondence"><PrintView id={view.id} onNavigate={setView} /></ToolShell>;
-    if (view.name === "styles") return <ToolShell title="Legal Correspondence"><StylesManager onNavigate={setView} /></ToolShell>;
-    return null;
+    return (
+        <ToolShell title="Legal Correspondence">
+            <OfficeApiAccess><LegalWorkspace /></OfficeApiAccess>
+        </ToolShell>
+    );
+}
+
+function LegalWorkspace() {
+    const [view, setView] = useState<LegalView>({ name: "dashboard" });
+    switch (view.name) {
+        case "dashboard": return <Dashboard onNavigate={setView} />;
+        case "list": return <LetterList onNavigate={setView} />;
+        case "new": return <LetterFormView onNavigate={setView} />;
+        case "edit": return <LetterFormView id={view.id} onNavigate={setView} />;
+        case "print": return <PrintView id={view.id} onNavigate={setView} />;
+        case "styles": return <StylesManager onNavigate={setView} />;
+    }
 }

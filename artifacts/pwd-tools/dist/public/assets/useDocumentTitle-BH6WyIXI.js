@@ -1,0 +1,1 @@
+import{r as o}from"./vendor-ui-7IIJxYfQ.js";function r(t){o.useEffect(()=>{const e=document.title;return document.title=t?`${t} — PWD Tools`:"PWD Tools Suite",()=>{document.title=e}},[t])}export{r as u};

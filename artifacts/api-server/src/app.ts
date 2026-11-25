@@ -25,9 +25,11 @@ app.use(
     },
   }),
 );
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+const allowedOrigins = (process.env.PWD_API_ALLOWED_ORIGINS ?? "")
+  .split(",")
+  .map(origin => origin.trim())
+  .filter(Boolean);
+app.use(cors({ origin: allowedOrigins, allowedHeaders: ["Authorization", "Content-Type"] }));
 
 app.use("/api", router);
 
