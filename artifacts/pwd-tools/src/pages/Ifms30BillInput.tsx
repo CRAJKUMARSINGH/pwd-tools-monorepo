@@ -126,10 +126,10 @@ function BillOutput({ calculation }: { calculation: Ifms30BillCalculation }) {
     // Column 2 shows bare amounts — the "Rs." unit is declared once in the table header.
     const withoutRupeePrefix = (value: string) => value.replace(/^Rs\.\s*/, "");
 
-    const renderRow = ([label, value]: OutputRow, index: number, emphasized = false) => (
+    const renderRow = ([label, value]: OutputRow, index: number, emphasized = false, boldAmount = false) => (
         <tr key={`${label}-${index}`}>
             <td style={{ ...labelCell, ...(emphasized ? { background: "#fff4cf" } : {}) }}>{label}</td>
-            <td style={{ ...valueCell, ...(emphasized ? { background: "#fff4cf", fontWeight: 700 } : {}) }}>{withoutRupeePrefix(value)}</td>
+            <td style={{ ...valueCell, ...(emphasized ? { background: "#fff4cf" } : {}), ...(emphasized || boldAmount ? { fontWeight: 700 } : {}) }}>{withoutRupeePrefix(value)}</td>
         </tr>
     );
 
@@ -183,7 +183,7 @@ function BillOutput({ calculation }: { calculation: Ifms30BillCalculation }) {
                                         मद वार विभाजन / Head-wise Bifurcation – Head 5054 (Present Bill Amount: Rs. {formatAmount(calculation.thisBillAmount)})
                                     </td>
                                 </tr>
-                                {calculation.bifurcationRows.map((row, index) => renderRow(row, index))}
+                                {calculation.bifurcationRows.map((row, index) => renderRow(row, index, false, true))}
                             </>
                         )}
                     </tbody>
@@ -280,7 +280,7 @@ function createA4Canvas(calculation: Ifms30BillCalculation): HTMLCanvasElement {
             drawText(label, startX + 8, y + rowHeight / 2, labelWidth - 16);
             drawText(value, startX + tableWidth - 8, y + rowHeight / 2, tableWidth - labelWidth - 16, {
                 align: "right",
-                font: `400 12px ${fontFamily}`,
+                font: `700 12px ${fontFamily}`,
             });
             y += rowHeight;
         }
