@@ -97,11 +97,11 @@ export function calculateIfms30Bill(form: Ifms30BillForm): Ifms30BillCalculation
         ["Income Tax (8658-00-112-00-00)", `Rs. ${formatAmount(incomeTax)}`],
         ["GSTIN Deduction (8658-00-139-00-00)", `Rs. ${formatAmount(gstDeduction)}`],
         ...(dfmt > 0
-            ? [["PD Account (DMFT) 8342 (8342-00-120-65-00)", `Rs. ${formatAmount(dfmt)}`] as OutputRow]
+            ? [["DMFT (8342 (8342-00-120-65-00)", `Rs. ${formatAmount(dfmt)}`] as OutputRow]
             : []),
         ["Labour Welfare (0230-00-800-06-00)", `Rs. ${formatAmount(labourWelfare)}`],
         ...(miningRoyalty > 0
-            ? [["Mines & Minerals / Royalty (0853-00-102-01-01)", `Rs. ${formatAmount(miningRoyalty)}`] as OutputRow]
+            ? [["Mining Royalty (0853-00-102-01-01)", `Rs. ${formatAmount(miningRoyalty)}`] as OutputRow]
             : []),
         ["Deposit-II (SD2) (8443) (8443-00-108-00-00)", `Rs. ${formatAmount(securityDeposit)}`],
         ...(depositV > 0
