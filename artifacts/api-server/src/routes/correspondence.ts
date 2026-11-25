@@ -22,6 +22,7 @@ import {
   CorrCreateLetterBody,
   CorrGetLetterParams,
   CorrUpdateLetterParams,
+  CorrUpdateLetterBody,
   CorrDeleteLetterParams,
   CorrGenerateDocxParams,
   CorrListLettersResponse,
@@ -36,14 +37,13 @@ import {
   AlignmentType,
   BorderStyle,
   Document,
+  LineRuleType,
   Packer,
   PageOrientation,
   Paragraph,
+  TabStopType,
   TextRun,
 } from "docx";
-import * as fs   from "fs";
-import * as os   from "os";
-import * as path from "path";
 
 const router: IRouter = Router();
 
@@ -73,7 +73,7 @@ function para(
   return new Paragraph({
     children: runs.map((r) => new TextRun(r)),
     alignment: opts.alignment ?? AlignmentType.JUSTIFIED,
-    spacing: { before: ZERO, after: ZERO, line: 276, lineRule: "auto" as any },
+    spacing: { before: ZERO, after: ZERO, line: 276, lineRule: LineRuleType.AUTO },
     ...(opts.indent ? { indent: opts.indent } : {}),
   });
 }
@@ -81,7 +81,7 @@ function para(
 function blankLine() {
   return new Paragraph({
     children: [],
-    spacing: { before: ZERO, after: ZERO, line: 276, lineRule: "auto" as any },
+    spacing: { before: ZERO, after: ZERO, line: 276, lineRule: LineRuleType.AUTO },
   });
 }
 
@@ -110,25 +110,9 @@ router.post("/letters", async (req, res): Promise<void> => {
   const parsed = CorrCreateLetterBody.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
 
-  const d = parsed.data;
   const [letter] = await db
     .insert(correspondenceLettersTable)
-    .values({
-      type:            d.type,
-      status:          d.status ?? "draft",
-      letterNumber:    d.letterNumber,
-      date:            d.date,
-      toName:          d.toName,
-      toDesignation:   d.toDesignation,
-      toOffice:        d.toOffice,
-      subject:         d.subject,
-      reference:       d.reference ?? null,
-      body:            d.body,
-      fromName:        d.fromName,
-      fromDesignation: d.fromDesignation,
-      fromOffice:      d.fromOffice,
-      cc:              d.cc ?? null,
-    })
+    .values(parsed.data)
     .returning();
 
   res.status(201).json(CorrCreateLetterResponse.parse(fmt(letter)));
@@ -170,10 +154,7 @@ router.get("/letters/:id", async (req, res): Promise<void> => {
   const params = CorrGetLetterParams.safeParse(req.params);
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
 
-  const [letter] = await db
-    .select()
-    .from(correspondenceLettersTable)
-    .where(eq(correspondenceLettersTable.id, params.data.id));
+  const letter = await findLetter(params.data.id);
 
   if (!letter) { res.status(404).json({ error: "Letter not found" }); return; }
   res.json(CorrGetLetterResponse.parse(fmt(letter)));
@@ -188,26 +169,9 @@ router.patch("/letters/:id", async (req, res): Promise<void> => {
   const parsed = CorrUpdateLetterBody.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
 
-  const upd: Record<string, unknown> = {};
-  const d = parsed.data;
-  if (d.type            !== undefined) upd.type            = d.type;
-  if (d.status          !== undefined) upd.status          = d.status;
-  if (d.letterNumber    !== undefined) upd.letterNumber    = d.letterNumber;
-  if (d.date            !== undefined) upd.date            = d.date;
-  if (d.toName          !== undefined) upd.toName          = d.toName;
-  if (d.toDesignation   !== undefined) upd.toDesignation   = d.toDesignation;
-  if (d.toOffice        !== undefined) upd.toOffice        = d.toOffice;
-  if (d.subject         !== undefined) upd.subject         = d.subject;
-  if (d.reference       !== undefined) upd.reference       = d.reference ?? null;
-  if (d.body            !== undefined) upd.body            = d.body;
-  if (d.fromName        !== undefined) upd.fromName        = d.fromName;
-  if (d.fromDesignation !== undefined) upd.fromDesignation = d.fromDesignation;
-  if (d.fromOffice      !== undefined) upd.fromOffice      = d.fromOffice;
-  if (d.cc              !== undefined) upd.cc              = d.cc ?? null;
-
   const [letter] = await db
     .update(correspondenceLettersTable)
-    .set(upd)
+    .set(parsed.data)
     .where(eq(correspondenceLettersTable.id, params.data.id))
     .returning();
 
@@ -230,172 +194,155 @@ router.delete("/letters/:id", async (req, res): Promise<void> => {
   res.sendStatus(204);
 });
 
+function letterParagraphs(letter: typeof correspondenceLettersTable.$inferSelect, english: boolean): Paragraph[] {
+  const toName = english ? letter.toNameEn : letter.toName;
+  const toDesignation = english ? letter.toDesignationEn : letter.toDesignation;
+  const toOffice = english ? letter.toOfficeEn : letter.toOffice;
+  const fromName = english ? letter.fromNameEn : letter.fromName;
+  const fromDesignation = english ? letter.fromDesignationEn : letter.fromDesignation;
+  const fromOffice = english ? letter.fromOfficeEn : letter.fromOffice;
+  const subject = english ? letter.subjectEn : letter.subject;
+  const reference = english ? letter.referenceEn : letter.reference;
+  const body = english ? letter.bodyEn : letter.body;
+  const cc = english ? letter.ccEn : letter.cc;
+
+  return [
+    // ── Office header ────────────────────────────────────────────
+    para([{ text: english ? "Government of Rajasthan" : "राजस्थान सरकार", bold: true, size: 28, font: "Mangal" }],
+         { alignment: AlignmentType.CENTER }),
+    para([{ text: english ? fromDesignation + ", Public Works Department" : fromDesignation + ", सार्वजनिक निर्माण विभाग", bold: true, size: 26, font: "Mangal" }],
+         { alignment: AlignmentType.CENTER }),
+    para([{ text: fromOffice, bold: true, size: 24, font: "Mangal" }],
+         { alignment: AlignmentType.CENTER }),
+    blankLine(),
+
+    // ── क्रमांक / दिनांक ─────────────────────────────────────────
+    new Paragraph({
+      children: [
+        new TextRun({ text: `${english ? "No.:" : "क्रमांकः"} ${letter.letterNumber}`, size: 22, font: "Mangal" }),
+        new TextRun({ text: "\t", size: 22, font: "Mangal" }),
+        new TextRun({ text: `${english ? "Date:" : "दिनांकः"} ${letter.date}`, size: 22, font: "Mangal" }),
+      ],
+      alignment: AlignmentType.LEFT,
+      spacing: { before: ZERO, after: ZERO, line: 276, lineRule: LineRuleType.AUTO },
+      tabStops: [{ type: TabStopType.RIGHT, position: A4_WIDTH_TWIPS - MARGIN_TWIPS * 2 }],
+    }),
+    blankLine(),
+
+    // ── Addressee ────────────────────────────────────────────────
+    para([{ text: english ? "To," : "सेवा में,",                           size: 22, font: "Mangal" }], { alignment: AlignmentType.LEFT }),
+    para([{ text: `${toDesignation},`,            size: 22, font: "Mangal" }], { alignment: AlignmentType.LEFT }),
+    para([{ text: `${toName},`,                   size: 22, font: "Mangal" }], { alignment: AlignmentType.LEFT }),
+    para([{ text: `${toOffice}${english ? "." : "।"}`,                 size: 22, font: "Mangal" }], { alignment: AlignmentType.LEFT }),
+    blankLine(),
+
+    // ── विषय ─────────────────────────────────────────────────────
+    para([
+      { text: english ? "Subject: " : "विषयः– ", bold: true, size: 22, font: "Mangal" },
+      { text: subject,         size: 22, font: "Mangal" },
+    ]),
+    blankLine(),
+
+    // ── संदर्भ (optional) ─────────────────────────────────────────
+    ...(reference ? [
+      para([
+        { text: english ? "Reference: " : "संदर्भः– ", bold: true, size: 22, font: "Mangal" },
+        { text: reference,     size: 22, font: "Mangal" },
+      ]),
+      blankLine(),
+    ] : []),
+
+    // ── महोदय ────────────────────────────────────────────────────
+    para([{ text: english ? "Sir/Madam," : "महोदय,", size: 22, font: "Mangal" }], { alignment: AlignmentType.LEFT }),
+    blankLine(),
+
+    // ── Body ──────────────────────────────────────────────────────
+    ...body.split("\n").map((line) =>
+      para([{ text: line, size: 22, font: "Mangal" }],
+           { indent: { firstLine: 720 } })
+    ),
+    blankLine(),
+
+    // ── भवदीय ────────────────────────────────────────────────────
+    para([{ text: english ? "Yours faithfully," : "भवदीय,", size: 22, font: "Mangal" }], { alignment: AlignmentType.LEFT }),
+    blankLine(), blankLine(), blankLine(),
+
+    // ── Signature ────────────────────────────────────────────────
+    para([{ text: `(${fromName})`,    size: 22, font: "Mangal" }], { alignment: AlignmentType.LEFT }),
+    para([{ text: fromDesignation,    size: 22, font: "Mangal" }], { alignment: AlignmentType.LEFT }),
+    para([{ text: fromOffice,         size: 22, font: "Mangal" }], { alignment: AlignmentType.LEFT }),
+
+    // ── CC (optional) ─────────────────────────────────────────────
+    ...(cc ? [
+      blankLine(),
+      new Paragraph({
+        children: [],
+        border: { top: { style: BorderStyle.SINGLE, size: 6, color: "000000" } },
+        spacing: { before: ZERO, after: ZERO },
+      }),
+      para([{ text: english ? "Copy to:" : "प्रतिलिपि सूचनार्थ एवं आवश्यक कार्यवाही हेतु प्रेषित:", bold: true, size: 22, font: "Mangal" }],
+           { alignment: AlignmentType.LEFT }),
+      blankLine(),
+      ...cc.split("\n").map((line, i) =>
+        para([{ text: `${i + 1}. ${line}`, size: 22, font: "Mangal" }],
+             { indent: { left: 360 } })
+      ),
+      blankLine(), blankLine(),
+      para([{ text: `(${fromName})`, size: 22, font: "Mangal" }], { alignment: AlignmentType.LEFT }),
+      para([{ text: fromDesignation, size: 22, font: "Mangal" }], { alignment: AlignmentType.LEFT }),
+    ] : []),
+  ];
+}
+
+function letterFilename(letter: typeof correspondenceLettersTable.$inferSelect): string {
+  const safeNumber = letter.letterNumber.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 120);
+  return `patra_${safeNumber}_${letter.id}.docx`;
+}
+
+async function findLetter(id: number) {
+  const [letter] = await db.select().from(correspondenceLettersTable)
+    .where(eq(correspondenceLettersTable.id, id));
+  return letter;
+}
+
 // ── Generate DOCX ────────────────────────────────────────────────────────
 
 router.post("/letters/:id/generate-docx", async (req, res): Promise<void> => {
   const params = CorrGenerateDocxParams.safeParse(req.params);
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
 
-  const [letter] = await db
-    .select()
-    .from(correspondenceLettersTable)
-    .where(eq(correspondenceLettersTable.id, params.data.id));
+  const letter = await findLetter(params.data.id);
 
   if (!letter) { res.status(404).json({ error: "Letter not found" }); return; }
-
-  const doc = new Document({
-    sections: [
-      {
-        properties: {
-          page: {
-            size: {
-              orientation: PageOrientation.PORTRAIT,
-              width:  A4_WIDTH_TWIPS,
-              height: A4_HEIGHT_TWIPS,
-            },
-            margin: {
-              top:    MARGIN_TWIPS,
-              right:  MARGIN_TWIPS,
-              bottom: MARGIN_TWIPS,
-              left:   MARGIN_TWIPS,
-              header: ZERO,
-              footer: ZERO,
-            },
-          },
-        },
-        children: [
-          // ── Office header ────────────────────────────────────────────
-          para([{ text: "राजस्थान सरकार", bold: true, size: 28, font: "Mangal" }],
-               { alignment: AlignmentType.CENTER }),
-          para([{ text: `${letter.fromDesignation}, सार्वजनिक निर्माण विभाग`, bold: true, size: 26, font: "Mangal" }],
-               { alignment: AlignmentType.CENTER }),
-          para([{ text: letter.fromOffice, bold: true, size: 24, font: "Mangal" }],
-               { alignment: AlignmentType.CENTER }),
-          blankLine(),
-
-          // ── क्रमांक / दिनांक ─────────────────────────────────────────
-          new Paragraph({
-            children: [
-              new TextRun({ text: `क्रमांकः ${letter.letterNumber}`, size: 22, font: "Mangal" }),
-              new TextRun({ text: "\t", size: 22, font: "Mangal" }),
-              new TextRun({ text: `दिनांकः ${letter.date}`, size: 22, font: "Mangal" }),
-            ],
-            alignment: AlignmentType.LEFT,
-            spacing: { before: ZERO, after: ZERO, line: 276, lineRule: "auto" as any },
-            tabStops: [{ type: "right" as any, position: A4_WIDTH_TWIPS - MARGIN_TWIPS * 2 }],
-          }),
-          blankLine(),
-
-          // ── Addressee ────────────────────────────────────────────────
-          para([{ text: "सेवा में,",                           size: 22, font: "Mangal" }], { alignment: AlignmentType.LEFT }),
-          para([{ text: `${letter.toDesignation},`,            size: 22, font: "Mangal" }], { alignment: AlignmentType.LEFT }),
-          para([{ text: `${letter.toName},`,                   size: 22, font: "Mangal" }], { alignment: AlignmentType.LEFT }),
-          para([{ text: `${letter.toOffice}।`,                 size: 22, font: "Mangal" }], { alignment: AlignmentType.LEFT }),
-          blankLine(),
-
-          // ── विषय ─────────────────────────────────────────────────────
-          para([
-            { text: "विषयः– ", bold: true, size: 22, font: "Mangal" },
-            { text: letter.subject,         size: 22, font: "Mangal" },
-          ]),
-          blankLine(),
-
-          // ── संदर्भ (optional) ─────────────────────────────────────────
-          ...(letter.reference ? [
-            para([
-              { text: "संदर्भः– ", bold: true, size: 22, font: "Mangal" },
-              { text: letter.reference,     size: 22, font: "Mangal" },
-            ]),
-            blankLine(),
-          ] : []),
-
-          // ── महोदय ────────────────────────────────────────────────────
-          para([{ text: "महोदय,", size: 22, font: "Mangal" }], { alignment: AlignmentType.LEFT }),
-          blankLine(),
-
-          // ── Body ──────────────────────────────────────────────────────
-          ...letter.body.split("\n").map((line) =>
-            para([{ text: line, size: 22, font: "Mangal" }],
-                 { indent: { firstLine: 720 } })
-          ),
-          blankLine(),
-
-          // ── भवदीय ────────────────────────────────────────────────────
-          para([{ text: "भवदीय,", size: 22, font: "Mangal" }], { alignment: AlignmentType.LEFT }),
-          blankLine(), blankLine(), blankLine(),
-
-          // ── Signature ────────────────────────────────────────────────
-          para([{ text: `(${letter.fromName})`,    size: 22, font: "Mangal" }], { alignment: AlignmentType.LEFT }),
-          para([{ text: letter.fromDesignation,    size: 22, font: "Mangal" }], { alignment: AlignmentType.LEFT }),
-          para([{ text: letter.fromOffice,         size: 22, font: "Mangal" }], { alignment: AlignmentType.LEFT }),
-
-          // ── CC (optional) ─────────────────────────────────────────────
-          ...(letter.cc ? [
-            blankLine(),
-            new Paragraph({
-              children: [],
-              border: { top: { style: BorderStyle.SINGLE, size: 6, color: "000000" } },
-              spacing: { before: ZERO, after: ZERO },
-            }),
-            para([{ text: "प्रतिलिपि सूचनार्थ एवं आवश्यक कार्यवाही हेतु प्रेषित:", bold: true, size: 22, font: "Mangal" }],
-                 { alignment: AlignmentType.LEFT }),
-            blankLine(),
-            ...letter.cc.split("\n").map((line, i) =>
-              para([{ text: `${i + 1}. ${line}`, size: 22, font: "Mangal" }],
-                   { indent: { left: 360 } })
-            ),
-            blankLine(), blankLine(),
-            para([{ text: `(${letter.fromName})`, size: 22, font: "Mangal" }], { alignment: AlignmentType.LEFT }),
-            para([{ text: letter.fromDesignation, size: 22, font: "Mangal" }], { alignment: AlignmentType.LEFT }),
-          ] : []),
-        ],
-      },
-    ],
-  });
-
-  // Write to OS temp dir (cross-platform: works on Linux/Windows/macOS)
-  const tmpDir = path.join(os.tmpdir(), "pwd-letters");
-  if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
-
-  const safeNum  = letter.letterNumber.replace(/[^a-zA-Z0-9\-_]/g, "_");
-  const filename = `patra_${safeNum}_${letter.id}.docx`;
-  const filePath = path.join(tmpDir, filename);
-
-  const buffer = await Packer.toBuffer(doc);
-  fs.writeFileSync(filePath, buffer);
 
   res.json(CorrGenerateDocxResponse.parse({
     downloadPath: `/api/correspondence/letters/${letter.id}/download`,
-    filename,
+    filename: letterFilename(letter),
   }));
 });
 
-// ── Download DOCX ────────────────────────────────────────────────────────
-
+// Render the current record on demand, including across server restarts.
 router.get("/letters/:id/download", async (req, res): Promise<void> => {
-  const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  const id  = parseInt(raw, 10);
-  if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
+  const params = CorrGenerateDocxParams.safeParse(req.params);
+  if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
 
-  const [letter] = await db
-    .select()
-    .from(correspondenceLettersTable)
-    .where(eq(correspondenceLettersTable.id, id));
+  const letter = await findLetter(params.data.id);
   if (!letter) { res.status(404).json({ error: "Letter not found" }); return; }
 
-  const safeNum  = letter.letterNumber.replace(/[^a-zA-Z0-9\-_]/g, "_");
-  const filename = `patra_${safeNum}_${letter.id}.docx`;
-  const filePath = path.join(os.tmpdir(), "pwd-letters", filename);
-
-  if (!fs.existsSync(filePath)) {
-    res.status(404).json({ error: "Document not generated yet. Call generate-docx first." });
-    return;
-  }
-
-  res.setHeader("Content-Type",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
-  res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
-  res.sendFile(filePath);
+  const versions = letter.language === "both" ? [false, true] : [letter.language === "english"];
+  const doc = new Document({
+    sections: versions.map(english => ({
+      properties: {
+        page: {
+          size: { orientation: PageOrientation.PORTRAIT, width: A4_WIDTH_TWIPS, height: A4_HEIGHT_TWIPS },
+          margin: { top: MARGIN_TWIPS, right: MARGIN_TWIPS, bottom: MARGIN_TWIPS, left: MARGIN_TWIPS, header: ZERO, footer: ZERO },
+        },
+      },
+      children: letterParagraphs(letter, english),
+    })),
+  });
+  const buffer = await Packer.toBuffer(doc);
+  res.attachment(letterFilename(letter)).send(buffer);
 });
 
 export default router;

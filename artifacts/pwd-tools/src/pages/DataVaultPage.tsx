@@ -6,6 +6,7 @@
  * Global: export-all JSON, import JSON, clear-all per tool.
  */
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
+import { readAuditReplies, readFreshParas, REPLIES_KEY, replaceFreshDraft } from "@/lib/audit-drafts";
 import {
   clearToolSnapshots,
   deleteSnapshot,
@@ -15,6 +16,8 @@ import {
   VAULT_TOOL,
   type VaultSnapshot,
 } from "@/lib/vault";
+import { restoreLetter } from "./Correspondence/storage";
+import { liveQuery } from "dexie";
 import {
   Archive,
   ChevronDown,
@@ -179,9 +182,11 @@ function ToolGroup({
   return (
     <div className="rounded-xl border border-amber-200 overflow-hidden shadow-sm mb-4">
       {/* Header */}
+      <div className="flex items-center bg-amber-50">
       <button
         className="w-full flex items-center gap-3 px-4 py-3 bg-amber-50 hover:bg-amber-100 transition-colors text-left"
         onClick={() => setOpen((p) => !p)}
+        aria-expanded={open}
       >
         <span className="text-xl">{toolIcon(tool)}</span>
         <div className="flex-1">
@@ -195,18 +200,16 @@ function ToolGroup({
         ) : (
           <ChevronRight className="w-4 h-4 text-amber-600" />
         )}
-        {/* Clear all for this tool */}
-        <span
-          role="button"
-          tabIndex={0}
-          title={`Clear all snapshots for ${toolName(tool)}`}
-          onClick={(e) => { e.stopPropagation(); onClearTool(tool); }}
-          onKeyDown={(e) => e.key === "Enter" && (e.stopPropagation(), onClearTool(tool))}
-          className="ml-2 p-1 rounded hover:bg-red-100 text-red-400 hover:text-red-700"
-        >
-          <Trash2 className="w-3.5 h-3.5" />
-        </span>
       </button>
+      <button
+        type="button"
+        aria-label={`Clear all snapshots for ${toolName(tool)}`}
+        onClick={() => onClearTool(tool)}
+        className="mr-3 p-2 rounded hover:bg-red-100 text-red-600 hover:text-red-700"
+      >
+        <Trash2 className="w-3.5 h-3.5" />
+      </button>
+      </div>
 
       {/* Rows */}
       {open && (
@@ -241,59 +244,86 @@ export default function DataVaultPage() {
   const { msg: toast, show: showToast } = useToast();
   const importRef = useRef<HTMLInputElement>(null);
 
-  const reload = useCallback(async () => {
-    setLoading(true);
-    const all = await loadAllSnapshots();
-    setSnapshots(all);
-    setLoading(false);
-  }, []);
-
-  useEffect(() => { reload(); }, [reload]);
+  useEffect(() => {
+    const subscription = liveQuery(loadAllSnapshots).subscribe({
+      next: snapshots => {
+        setSnapshots(snapshots);
+        setLoading(false);
+      },
+      error: () => {
+        showToast("Vault could not be opened in this browser.");
+        setLoading(false);
+      },
+    });
+    return () => subscription.unsubscribe();
+  }, [showToast]);
 
   // Group by tool, preserve order
   const grouped = snapshots.reduce<Record<string, VaultSnapshot[]>>((acc, s) => {
     if (!acc[s.tool]) acc[s.tool] = [];
     acc[s.tool].push(s);
     return acc;
-  }, {});
+  }, Object.create(null) as Record<string, VaultSnapshot[]>);
 
   // ── handlers ──────────────────────────────────────────────────────────
 
   const handleDelete = useCallback(async (s: VaultSnapshot) => {
     if (!s.id) return;
-    await deleteSnapshot(s.id);
-    showToast("Snapshot deleted.");
-    reload();
-  }, [reload, showToast]);
+    try {
+      await deleteSnapshot(s.id);
+      showToast("Snapshot deleted.");
+    } catch {
+      showToast("Could not delete the snapshot.");
+    }
+  }, [showToast]);
 
-  const handleRestore = useCallback((s: VaultSnapshot) => {
+  const handleRestore = useCallback(async (s: VaultSnapshot) => {
     const lsKey = TOOL_META[s.tool]?.lsKey;
     if (!lsKey) return;
     try {
-      localStorage.setItem(lsKey, JSON.stringify(s.data));
-      showToast(`Restored to localStorage key "${lsKey}". Reload the tool to see it.`);
-    } catch {
-      showToast("Restore failed — localStorage may be full.");
+      if (s.tool === VAULT_TOOL.CORRESPONDENCE) {
+        restoreLetter(s.data);
+      } else if (s.tool === VAULT_TOOL.AUDIT_REPLY) {
+        const restored = readAuditReplies(s.data);
+        if (!Object.keys(restored).length) throw new Error("This backup has no valid audit replies.");
+        const current = readAuditReplies(JSON.parse(localStorage.getItem(REPLIES_KEY) ?? "{}"));
+        localStorage.setItem(REPLIES_KEY, JSON.stringify({ ...current, ...restored }));
+      } else if (s.tool === VAULT_TOOL.AUDIT_FRESH) {
+        await replaceFreshDraft(readFreshParas(s.data));
+      } else {
+        if (!Array.isArray(s.data)) throw new Error("Invalid tool history.");
+        localStorage.setItem(lsKey, JSON.stringify(s.data));
+      }
+      showToast("Draft restored. Reopen the tool to see it.");
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Could not restore this snapshot.");
     }
   }, [showToast]);
 
   const handleClearTool = useCallback(async (tool: string) => {
     if (!window.confirm(`Delete ALL snapshots for "${toolName(tool)}"? This cannot be undone.`)) return;
-    await clearToolSnapshots(tool);
-    showToast(`All snapshots for ${toolName(tool)} cleared.`);
-    reload();
-  }, [reload, showToast]);
+    try {
+      await clearToolSnapshots(tool);
+      showToast(`All snapshots for ${toolName(tool)} cleared.`);
+    } catch {
+      showToast("Could not clear the snapshots.");
+    }
+  }, [showToast]);
 
   const handleExport = useCallback(async () => {
-    const json = await exportAllAsJson();
-    const blob = new Blob([json], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `pwd-vault-export-${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    showToast("Vault exported.");
+    try {
+      const json = await exportAllAsJson();
+      const blob = new Blob([json], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `pwd-vault-export-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast("Vault exported.");
+    } catch {
+      showToast("Could not export the Vault.");
+    }
   }, [showToast]);
 
   const handleImport = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -303,13 +333,12 @@ export default function DataVaultPage() {
       const text = await file.text();
       const count = await importFromJson(text);
       showToast(`Imported ${count} snapshot(s) successfully.`);
-      reload();
     } catch (err: unknown) {
       showToast(`Import failed: ${err instanceof Error ? err.message : "Invalid file."}`);
     } finally {
       if (importRef.current) importRef.current.value = "";
     }
-  }, [reload, showToast]);
+  }, [showToast]);
 
   // ── render ─────────────────────────────────────────────────────────────
 
@@ -321,7 +350,7 @@ export default function DataVaultPage() {
 
       {/* Header */}
       <div className="sticky top-0 z-20 bg-gradient-to-r from-[#7B0D00] via-[#c0392b] to-[#e67e22] shadow-lg">
-        <div className="flex items-center justify-between px-6 py-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6">
           <div className="flex items-center gap-3">
             <Archive className="w-6 h-6 text-yellow-300" />
             <div>
@@ -368,7 +397,7 @@ export default function DataVaultPage() {
 
       {/* Toast */}
       {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-gray-800 text-white text-sm px-5 py-2.5 rounded-full shadow-xl animate-pulse">
+        <div role="status" className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-gray-800 text-white text-sm px-5 py-2.5 rounded-full shadow-xl">
           {toast}
         </div>
       )}
@@ -388,7 +417,7 @@ export default function DataVaultPage() {
             <Archive className="w-16 h-16 text-amber-300 mx-auto mb-4" />
             <p className="text-amber-800 font-semibold text-lg">Vault is empty</p>
             <p className="text-amber-600 text-sm mt-2">
-              Use any tool — your inputs will be automatically saved here.
+              Supported tools save backups here as you work.
             </p>
             <p className="text-amber-500 text-xs mt-4">
               You can also import a previous export using the button above.

@@ -1,5 +1,6 @@
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
-import { useLocation } from "wouter";
+import { useState } from "react";
+import { Link } from "wouter";
 
 const TOOLS = [
   // ── Priority tools (pinned first) ─────────────────────────────────────
@@ -42,6 +43,14 @@ const TOOLS = [
     description: "Upload Excel (.xlsx) and generate bulk RPWA 28 hand receipts — up to 50 rows per file",
     htmlFile: "ExcelToEmd.html",
     directPath: null as string | null,
+  },
+  {
+    id: "data-vault",
+    icon: "🗃️",
+    name: "Data Vault",
+    description: "Find saved drafts and manage local backups.",
+    htmlFile: null,
+    directPath: "/data-vault",
   },
   {
     id: "image-compressor",
@@ -235,7 +244,12 @@ function Diyas() {
 
 export default function Home() {
   useDocumentTitle("PWD Tools Suite");
-  const [, navigate] = useLocation();
+  const [search, setSearch] = useState("");
+  const terms = search.normalize("NFC").trim().toLowerCase().split(/\s+/).filter(Boolean);
+  const tools = TOOLS.filter((tool) => {
+    const text = `${tool.name} ${tool.id} ${tool.description}`.normalize("NFC").toLowerCase();
+    return terms.every((term) => text.includes(term));
+  });
 
   return (
     <>
@@ -268,18 +282,26 @@ export default function Home() {
           transform: translateY(-3px);
           border-color: #c8720a;
         }
+        .tool-card-navratri:focus-visible {
+          outline: 3px solid #7b2d00;
+          outline-offset: 3px;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .tools-home [style*="animation"] { animation: none !important; }
+          .tool-card-navratri { transition: none; }
+        }
       `}</style>
 
-      <div style={{ minHeight: "100vh", background: "linear-gradient(160deg, #fff8e1 0%, #fff3e0 40%, #fce4ec 100%)", fontFamily: "'Noto Sans Devanagari','Segoe UI',sans-serif" }}>
+      <div className="tools-home" style={{ minHeight: "100vh", background: "linear-gradient(160deg, #fff8e1 0%, #fff3e0 40%, #fce4ec 100%)", fontFamily: "'Noto Sans Devanagari','Segoe UI',sans-serif" }}>
 
         {/* Navratri Header */}
         <div style={{ position: "relative", overflow: "hidden", background: "linear-gradient(135deg, #7B0D00 0%, #c0392b 25%, #e67e22 50%, #c0392b 75%, #7B0D00 100%)", backgroundSize: "300% auto", animation: "shimmer 8s linear infinite", borderBottom: "4px solid #FFD700" }}>
           <Diyas />
           <div style={{ position: "relative", zIndex: 1, textAlign: "center", padding: "28px 24px 18px" }}>
             <div style={{ fontSize: "48px", marginBottom: "6px", filter: "drop-shadow(0 0 12px #FFD700)" }}>🏗️</div>
-            <div style={{ color: "#FFD700", fontWeight: 900, fontSize: "1.8rem", letterSpacing: "0.06em", textShadow: "0 0 16px rgba(255,215,0,0.8), 0 2px 8px rgba(0,0,0,0.5)" }}>
+            <h1 style={{ color: "#FFD700", fontWeight: 900, fontSize: "1.8rem", letterSpacing: "0.06em", textShadow: "0 0 16px rgba(255,215,0,0.8), 0 2px 8px rgba(0,0,0,0.5)" }}>
               🪔 PWD Tools Suite 🪔
-            </div>
+            </h1>
             <div style={{ color: "#FFEAA7", fontWeight: 500, fontSize: "0.95rem", letterSpacing: "0.08em", marginTop: "6px" }}>
               Professional Tools for Public Works Department
             </div>
@@ -291,19 +313,33 @@ export default function Home() {
         </div>
 
         {/* Tool Grid */}
-        <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "32px 24px" }}>
+        <main style={{ maxWidth: "1200px", margin: "0 auto", padding: "32px 24px" }}>
+          <div className="mb-6 flex max-w-lg flex-col gap-2">
+            <label className="font-semibold text-[#7b2d00]" htmlFor="tool-search">Search tools</label>
+            <input
+              id="tool-search"
+              type="search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Try IFMS, Audit Reply, or अदेयता"
+              className="w-full rounded-lg border border-amber-700 bg-white px-3 py-2 text-[#3a1a00]"
+            />
+          </div>
+          <p role="status" className={tools.length ? "sr-only" : "text-sm text-[#7b2d00]"}>
+            {tools.length ? `${tools.length} tools found` : "No tools match your search."}
+          </p>
           <div style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 270px), 1fr))",
             gap: "20px",
           }}>
-            {TOOLS.map((tool) => (
-              <button
+            {tools.map((tool) => (
+              <Link
                 key={tool.id}
-                onClick={() => navigate(tool.directPath ?? `/tool/${tool.id}`)}
+                href={tool.directPath ?? `/tool/${tool.id}`}
                 className="tool-card-navratri"
               >
-                <div style={{ fontSize: "36px", filter: "drop-shadow(0 0 4px rgba(230,168,23,0.4))" }}>{tool.icon}</div>
+                <div aria-hidden="true" style={{ fontSize: "36px", filter: "drop-shadow(0 0 4px rgba(230,168,23,0.4))" }}>{tool.icon}</div>
                 <div>
                   <div style={{ fontWeight: 700, fontSize: "1rem", color: "#7B2D00", marginBottom: "6px" }}>{tool.name}</div>
                   <div style={{ fontSize: "0.875rem", color: "#6b3a00", lineHeight: 1.5 }}>{tool.description}</div>
@@ -319,10 +355,10 @@ export default function Home() {
                 }}>
                   🪔 Launch Tool
                 </div>
-              </button>
+              </Link>
             ))}
           </div>
-        </div>
+        </main>
 
         {/* Footer */}
         <div style={{ textAlign: "center", padding: "24px", color: "#7B2D00", fontSize: "0.85rem", borderTop: "2px solid #e6a817", background: "linear-gradient(90deg, #fffbf0, #fff8e1, #fffbf0)" }}>

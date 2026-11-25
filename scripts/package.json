@@ -4,11 +4,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "hello": "tsx ./src/hello.ts",
-    "test:smoke": "cd .. && tsx scripts/tests/smoketest-navigation.mjs && tsx scripts/tests/smoketest-print.mjs && tsx scripts/tests/smoketest-gps.mjs && tsx scripts/tests/smoketest-transliteration.mjs && tsx scripts/tests/smoketest-audit.mjs && tsx scripts/tests/smoketest-bankletter.mjs && tsx scripts/tests/verify-audit-home-button.mjs",
+    "test:smoke": "cd .. && tsx scripts/tests/smoketest-navigation.mjs && tsx scripts/tests/smoketest-legacy-tools.mjs && tsx scripts/tests/smoketest-print.mjs && tsx scripts/tests/smoketest-gps.mjs && tsx scripts/tests/smoketest-transliteration.mjs && tsx scripts/tests/smoketest-audit.mjs && tsx scripts/tests/smoketest-bankletter.mjs && tsx scripts/tests/verify-audit-home-button.mjs",
+    "test:api-auth": "tsx tests/smoketest-api-auth.mjs && tsx tests/smoketest-api-auth.mjs --unconfigured",
+    "test:correspondence": "tsx tests/smoketest-correspondence.mjs",
     "test:gps": "tsx tests/smoketest-gps.mjs",
-    "test:navigation": "tsx tests/smoketest-navigation.mjs",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "test:navigation": "tsx tests/smoketest-navigation.mjs"
   },
   "devDependencies": {
     "@types/node": "^25.3.3",

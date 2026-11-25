@@ -12,12 +12,14 @@
  * `audit-print` print scope are unchanged — the smoke harnesses pin them.
  */
 import { CASES } from "@/data/audit-cases";
+import { toast } from "@/hooks/use-toast";
 import { useFreshParas, type FreshPara } from "@/hooks/useFreshParas";
+import { readAuditReplies, REPLIES_KEY, type AuditReply as ReplyData } from "@/lib/audit-drafts";
 import { generateDocx } from "@/lib/generate-docx";
 import { generateFreshDocx } from "@/lib/generate-fresh-docx";
 import { usePrintPage } from "@/lib/printPage";
 import { transliterateLastWord } from "@/lib/roman-to-hindi";
-import { saveSnapshot, VAULT_TOOL } from "@/lib/vault";
+import { saveDraftSnapshot, VAULT_TOOL } from "@/lib/vault";
 import {
   ArrowDown,
   ArrowUp,
@@ -45,18 +47,12 @@ interface CaseEntry {
   defaultReply?: string;
 }
 
-interface ReplyData {
-  reply: string;
-  comments: string;
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Storage helpers
 // ─────────────────────────────────────────────────────────────────────────────
 function loadFromStorage(): Record<string, ReplyData> {
   try {
-    const d = localStorage.getItem('audit-reply-data');
-    return d ? JSON.parse(d) : {};
+    return readAuditReplies(JSON.parse(localStorage.getItem(REPLIES_KEY) ?? "{}"));
   } catch {
     return {};
   }
@@ -223,19 +219,22 @@ function ExistingParasTab() {
 
   const [insertAfter, setInsertAfter] = useState<number>(-1);
 
-  // Persist replies + vault snapshot
+  const paraCount = orderedCases.length;
   useEffect(() => {
-    localStorage.setItem('audit-reply-data', JSON.stringify(replies));
+    try {
+      localStorage.setItem(REPLIES_KEY, JSON.stringify(replies));
+    } catch {
+      toast({ title: "Audit replies could not be saved in this browser.", variant: "destructive" });
+    }
     const filled = Object.values(replies).filter(r => r.reply.trim() || r.comments.trim()).length;
     if (filled > 0) {
-      saveSnapshot(
+      void saveDraftSnapshot(
         VAULT_TOOL.AUDIT_REPLY,
         `Audit Reply — ${filled} para(s) filled — ${new Date().toLocaleString("en-IN")}`,
-        { paras: orderedCases.length, replies },
-      ).catch(() => { });
+        { paras: paraCount, replies },
+      ).catch(() => toast({ title: "Audit Reply Vault backup could not be saved.", variant: "destructive" }));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [replies]);
+  }, [replies, paraCount]);
 
   // Persist row order + extra rows
   useEffect(() => { localStorage.setItem('audit-order', JSON.stringify(orderedCases.map(c => c.no))); }, [orderedCases]);

@@ -30,7 +30,10 @@ const app = readFileSync(path.join(SRC, "App.tsx"), "utf8");
 
 // component name → import specifier
 const imports = Object.fromEntries(
-  [...app.matchAll(/import\s+(\w+)\s+from\s+"(@\/pages\/[^"]+)"/g)].map(([, n, p]) => [n, p]),
+  [
+    ...app.matchAll(/import\s+(\w+)\s+from\s+"(@\/pages\/[^"]+)"/g),
+    ...app.matchAll(/const\s+(\w+)\s*=\s*lazy\(\(\)\s*=>\s*import\("(@\/pages\/[^"]+)"\)\)/g),
+  ].map(([, n, p]) => [n, p]),
 );
 
 // every routable page — handles component={X}, component={() => <X />}
@@ -46,8 +49,7 @@ const routes = app
       line.match(/component=(\w+)/)?.[1];
     return route && comp ? { route, comp } : null;
   })
-  .filter(Boolean)
-  .filter(({ comp }) => imports[comp]);
+  .filter(Boolean);
 
 /** Pages that need neither check. */
 const EXEMPT = new Set(["NotFound"]);
@@ -70,7 +72,7 @@ let failed = 0;
 for (const { route, comp } of routes) {
   if (EXEMPT.has(comp)) continue;
 
-  const file = resolvePageFile(imports[comp]);
+  const file = imports[comp] && resolvePageFile(imports[comp]);
   if (!file) {
     failed++;
     console.log(`  ✗ ${route.padEnd(26)} ${comp.padEnd(26)} page file not found`);

@@ -10,6 +10,7 @@ type Props = {
   children: ReactNode;
   homeLabel?: string;
   homeAriaLabel?: string;
+  festive?: boolean;
 };
 
 export default function ToolShell({
@@ -20,13 +21,16 @@ export default function ToolShell({
   children,
   homeLabel = "← Home",
   homeAriaLabel = "Back to Home",
+  festive = false,
 }: Props) {
   const [, navigate] = useLocation();
 
   return (
     <div className="flex min-h-[100dvh] flex-col">
       <header className="hide-on-print sticky top-0 z-30">
-        <div className="flex items-center gap-3 border-b bg-primary px-3 py-2.5 text-primary-foreground">
+        <div className={`flex items-center gap-3 border-b px-3 py-2.5 ${festive
+          ? "border-amber-400 bg-gradient-to-r from-[#7b0d00] via-[#a83218] to-[#98420b] text-amber-50"
+          : "bg-primary text-primary-foreground"}`}>
           <button
             type="button"
             onClick={() => navigate("/home")}
@@ -43,7 +47,10 @@ export default function ToolShell({
             {subtitle && <p className="truncate text-[11px] opacity-75">{subtitle}</p>}
           </div>
 
-          <div className="ml-auto flex shrink-0 items-center gap-2">{actions}</div>
+          <div className="ml-auto flex shrink-0 items-center gap-2">
+            {festive && <span className="hidden text-xs font-semibold sm:inline">🪔 नवरात्रि एवं दीपावली की शुभकामनाएँ 🌸</span>}
+            {actions}
+          </div>
         </div>
         {toolbar}
       </header>

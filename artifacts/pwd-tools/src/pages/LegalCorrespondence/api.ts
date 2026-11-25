@@ -11,21 +11,10 @@ import type {
   LegalCreateStyleInput,
   LegalUpdateStyleInput,
 } from "@workspace/api-zod";
+import { officeApiEnabled, officeApiRequest } from "@/lib/office-api";
 
-const BASE = (import.meta.env.VITE_API_URL ?? "").replace(/\/+$/, "");
-const ROOT = `${BASE}/api/legal`;
-
-async function req<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${ROOT}${path}`, {
-    headers: { "Content-Type": "application/json" },
-    ...init,
-  });
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new Error(`API ${res.status}: ${body || res.statusText}`);
-  }
-  if (res.status === 204) return undefined as T;
-  return res.json() as Promise<T>;
+function req<T>(path: string, init?: RequestInit): Promise<T> {
+  return officeApiRequest<T>(`/legal${path}`, init);
 }
 
 export const legalApi = {
@@ -61,4 +50,4 @@ export const legalApi = {
   deleteStyle:  (id: number) => req<void>(`/styles/${id}`, { method: "DELETE" }),
 };
 
-export const LEGAL_API_ENABLED = Boolean(import.meta.env.VITE_API_URL);
+export const LEGAL_API_ENABLED = officeApiEnabled;

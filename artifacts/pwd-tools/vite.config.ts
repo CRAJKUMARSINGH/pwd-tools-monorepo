@@ -43,7 +43,6 @@ export default defineConfig(async () => {
         output: {
           manualChunks: {
             // Split heavy vendor libs into separate cacheable chunks
-            "vendor-react": ["react", "react-dom"],
             "vendor-query": ["@tanstack/react-query"],
             "vendor-ui": [
               "@radix-ui/react-dialog",

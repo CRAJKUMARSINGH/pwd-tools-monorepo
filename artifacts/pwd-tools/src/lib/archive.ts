@@ -42,7 +42,9 @@ export function archiveDelete(key: string, id: string): void {
     try {
         const existing = archiveLoad(key);
         localStorage.setItem(key, JSON.stringify(existing.filter(e => e.id !== id)));
-    } catch { }
+    } catch {
+        // Storage may be unavailable. Leave the existing archive intact.
+    }
 }
 
 /** Format ISO string → readable Hindi-style date */

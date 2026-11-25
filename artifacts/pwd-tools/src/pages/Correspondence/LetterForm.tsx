@@ -1,5 +1,5 @@
 import { ArrowLeft, FileCheck, Languages, Save } from "lucide-react";
-import { useState } from "react";
+import { useId, useState } from "react";
 import type { Letter, LetterFormData, LetterLanguage, LetterType } from "./types";
 import {
   DEFAULT_FROM_DESIGNATION,
@@ -15,6 +15,7 @@ interface Props {
   initialType: LetterType;
   existing?: Letter;
   onSubmit: (data: LetterFormData) => void;
+  saving?: boolean;
   onBack: () => void;
 }
 
@@ -47,10 +48,13 @@ interface HInputProps {
 
 function HInput({ label, testid, value, onChange, placeholder, translit, required }: HInputProps) {
   const tl = useTranslit(translit, value, onChange);
+  const id = useId();
   return (
     <div>
-      <label className={LABEL}>{label}{required && " *"}</label>
+      <label className={LABEL} htmlFor={id}>{label}{required && " *"}</label>
       <input
+        id={id}
+        aria-required={required}
         data-testid={testid}
         className={INPUT + (translit ? " bg-amber-50 focus:bg-white" : "")}
         placeholder={placeholder}
@@ -66,10 +70,13 @@ interface HTextareaProps extends HInputProps {
 
 function HTextarea({ label, testid, value, onChange, placeholder, translit, rows = 3, required }: HTextareaProps) {
   const tl = useTranslit(translit, value, onChange);
+  const id = useId();
   return (
     <div>
-      <label className={LABEL}>{label}{required && " *"}</label>
+      <label className={LABEL} htmlFor={id}>{label}{required && " *"}</label>
       <textarea
+        id={id}
+        aria-required={required}
         data-testid={testid}
         className={TEXTAREA + (translit ? " bg-amber-50 focus:bg-white" : "")}
         rows={rows}
@@ -82,7 +89,7 @@ function HTextarea({ label, testid, value, onChange, placeholder, translit, rows
 
 // ── Main form ──────────────────────────────────────────────────────────────
 
-export default function LetterForm({ initialType, existing, onSubmit, onBack }: Props) {
+export default function LetterForm({ initialType, existing, onSubmit, onBack, saving = false }: Props) {
   const isEdit = !!existing;
   const isReply = (existing?.type ?? initialType) === "reply";
 
@@ -218,7 +225,7 @@ export default function LetterForm({ initialType, existing, onSubmit, onBack }: 
         </p>
         <div className="flex flex-wrap gap-2">
           {(Object.keys(LANGUAGE_LABEL) as LetterLanguage[]).map((lng) => (
-            <button key={lng} type="button" data-testid={`language-${lng}`}
+            <button key={lng} type="button" data-testid={`language-${lng}`} aria-pressed={form.language === lng}
               onClick={() => setLanguage(lng)}
               className={`px-4 py-2 rounded-md text-sm font-semibold border transition-colors ${form.language === lng
                 ? "bg-blue-700 text-white border-blue-700"
@@ -237,15 +244,15 @@ export default function LetterForm({ initialType, existing, onSubmit, onBack }: 
       {/* ── Letter number & date ── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className={LABEL}>क्रमांक / Letter No. *</label>
-          <input data-testid="input-letter-number" className={INPUT}
+          <label className={LABEL} htmlFor="letter-number">क्रमांक / Letter No. *</label>
+          <input id="letter-number" data-testid="input-letter-number" className={INPUT} aria-required="true"
             value={form.letterNumber}
             onChange={(e) => set("letterNumber", e.target.value)}
             placeholder="PWD/EE/DD-II/UDR/2026/___" />
         </div>
         <div>
-          <label className={LABEL}>दिनांक / Date *</label>
-          <input data-testid="input-date" className={INPUT}
+          <label className={LABEL} htmlFor="letter-date">दिनांक / Date *</label>
+          <input id="letter-date" data-testid="input-date" className={INPUT} aria-required="true"
             value={form.date}
             onChange={(e) => set("date", e.target.value)}
             placeholder="DD.MM.YYYY" />
@@ -273,20 +280,20 @@ export default function LetterForm({ initialType, existing, onSubmit, onBack }: 
         {showEnglish && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
-              <label className={LABEL}>Name *</label>
-              <input data-testid="input-to-name-en" className={INPUT}
+              <label className={LABEL} htmlFor="letter-recipient-en">Name *</label>
+              <input id="letter-recipient-en" data-testid="input-to-name-en" className={INPUT} aria-required="true"
                 value={form.toNameEn} onChange={(e) => set("toNameEn", e.target.value)}
                 placeholder="Superintending Engineer" />
             </div>
             <div>
-              <label className={LABEL}>Designation *</label>
-              <input data-testid="input-to-designation-en" className={INPUT}
+              <label className={LABEL} htmlFor="letter-designation-en">Designation</label>
+              <input id="letter-designation-en" data-testid="input-to-designation-en" className={INPUT}
                 value={form.toDesignationEn} onChange={(e) => set("toDesignationEn", e.target.value)}
                 placeholder="Superintending Engineer" />
             </div>
             <div>
-              <label className={LABEL}>Office *</label>
-              <input data-testid="input-to-office-en" className={INPUT}
+              <label className={LABEL} htmlFor="letter-office-en">Office</label>
+              <input id="letter-office-en" data-testid="input-to-office-en" className={INPUT}
                 value={form.toOfficeEn} onChange={(e) => set("toOfficeEn", e.target.value)}
                 placeholder="PWD Circle, Udaipur" />
             </div>
@@ -304,8 +311,8 @@ export default function LetterForm({ initialType, existing, onSubmit, onBack }: 
         )}
         {showEnglish && (
           <div>
-            <label className={LABEL}>Subject *</label>
-            <input data-testid="input-subject-en" className={INPUT}
+            <label className={LABEL} htmlFor="letter-subject-en">Subject *</label>
+            <input id="letter-subject-en" data-testid="input-subject-en" className={INPUT} aria-required="true"
               value={form.subjectEn} onChange={(e) => set("subjectEn", e.target.value)}
               placeholder="Enter subject..." />
           </div>
@@ -323,8 +330,8 @@ export default function LetterForm({ initialType, existing, onSubmit, onBack }: 
           )}
           {showEnglish && (
             <div>
-              <label className={LABEL}>Reference</label>
-              <textarea data-testid="input-reference-en" className={TEXTAREA} rows={2}
+              <label className={LABEL} htmlFor="letter-reference-en">Reference</label>
+              <textarea id="letter-reference-en" data-testid="input-reference-en" className={TEXTAREA} rows={2}
                 value={form.referenceEn} onChange={(e) => set("referenceEn", e.target.value)}
                 placeholder="Reference letter details..." />
             </div>
@@ -342,8 +349,8 @@ export default function LetterForm({ initialType, existing, onSubmit, onBack }: 
         )}
         {showEnglish && (
           <div>
-            <label className={LABEL}>Letter body *</label>
-            <textarea data-testid="input-body-en" className={TEXTAREA} rows={8}
+            <label className={LABEL} htmlFor="letter-body-en">Letter body *</label>
+            <textarea id="letter-body-en" data-testid="input-body-en" className={TEXTAREA} rows={8} aria-required="true"
               value={form.bodyEn} onChange={(e) => set("bodyEn", e.target.value)}
               placeholder="Write the main body of the letter..." />
           </div>
@@ -367,14 +374,14 @@ export default function LetterForm({ initialType, existing, onSubmit, onBack }: 
         )}
         {showEnglish && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div><label className={LABEL}>Name</label>
-              <input data-testid="input-from-name-en" className={INPUT}
+            <div><label className={LABEL} htmlFor="letter-sender-en">Name</label>
+              <input id="letter-sender-en" data-testid="input-from-name-en" className={INPUT}
                 value={form.fromNameEn} onChange={(e) => set("fromNameEn", e.target.value)} /></div>
-            <div><label className={LABEL}>Designation</label>
-              <input data-testid="input-from-designation-en" className={INPUT}
+            <div><label className={LABEL} htmlFor="letter-sender-designation-en">Designation</label>
+              <input id="letter-sender-designation-en" data-testid="input-from-designation-en" className={INPUT}
                 value={form.fromDesignationEn} onChange={(e) => set("fromDesignationEn", e.target.value)} /></div>
-            <div><label className={LABEL}>Office</label>
-              <input data-testid="input-from-office-en" className={INPUT}
+            <div><label className={LABEL} htmlFor="letter-sender-office-en">Office</label>
+              <input id="letter-sender-office-en" data-testid="input-from-office-en" className={INPUT}
                 value={form.fromOfficeEn} onChange={(e) => set("fromOfficeEn", e.target.value)} /></div>
           </div>
         )}
@@ -391,8 +398,8 @@ export default function LetterForm({ initialType, existing, onSubmit, onBack }: 
         )}
         {showEnglish && (
           <div>
-            <label className={LABEL}>Copy to (one per line)</label>
-            <textarea data-testid="input-cc-en" className={TEXTAREA} rows={3}
+            <label className={LABEL} htmlFor="letter-cc-en">Copy to (one per line)</label>
+            <textarea id="letter-cc-en" data-testid="input-cc-en" className={TEXTAREA} rows={3}
               value={form.ccEn} onChange={(e) => set("ccEn", e.target.value)}
               placeholder="Chief Engineer (Buildings), PWD, Jaipur for information." />
           </div>
@@ -401,12 +408,12 @@ export default function LetterForm({ initialType, existing, onSubmit, onBack }: 
 
       {/* ── Actions ── */}
       <div className="flex flex-wrap gap-3 pt-2 border-t border-gray-200">
-        <button data-testid="btn-save-draft" onClick={() => handleSubmit("draft")}
-          className="flex items-center gap-2 px-5 py-2.5 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
+        <button data-testid="btn-save-draft" disabled={saving} onClick={() => handleSubmit("draft")}
+          className="flex items-center gap-2 px-5 py-2.5 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-60 transition-colors">
           <Save size={15} /> Draft सहेजें
         </button>
-        <button data-testid="btn-save-final" onClick={() => handleSubmit("final")}
-          className="flex items-center gap-2 px-5 py-2.5 bg-blue-700 text-white rounded-lg text-sm font-semibold hover:bg-blue-800 transition-colors">
+        <button data-testid="btn-save-final" disabled={saving} onClick={() => handleSubmit("final")}
+          className="flex items-center gap-2 px-5 py-2.5 bg-blue-700 text-white rounded-lg text-sm font-semibold hover:bg-blue-800 disabled:opacity-60 transition-colors">
           <FileCheck size={15} /> अंतिम रूप से सहेजें / Save Final
         </button>
       </div>

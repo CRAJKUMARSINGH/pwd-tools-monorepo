@@ -3,12 +3,18 @@ import type { Letter, LetterFormData } from "./types";
 
 const STORAGE_KEY = "pwd_correspondence_letters";
 
+function isSavedLetter(value: unknown): value is Partial<Letter> & { id: string } {
+  return !!value && typeof value === "object" && "id" in value &&
+    typeof value.id === "string" && value.id.trim().length > 0;
+}
+
 export function loadLetters(): Letter[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
-    const parsed = JSON.parse(raw) as Partial<Letter>[];
-    return parsed.map((letter) => ({
+    const parsed: unknown = JSON.parse(raw);
+    const records = Array.isArray(parsed) ? parsed : [parsed];
+    return records.filter(isSavedLetter).map((letter) => ({
       ...letter,
       language: letter.language ?? "hindi",
       toName: letter.toName ?? "",
@@ -36,6 +42,17 @@ export function loadLetters(): Letter[] {
   } catch {
     return [];
   }
+}
+
+export function restoreLetter(data: unknown): void {
+  if (!isSavedLetter(data) || (data.type !== "new" && data.type !== "reply")) {
+    throw new Error("Invalid correspondence letter.");
+  }
+  const letters = loadLetters();
+  const existing = letters.findIndex(letter => letter.id === data.id);
+  if (existing >= 0) letters[existing] = { ...letters[existing], ...data };
+  else letters.unshift(data as Letter);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(letters));
 }
 
 export function saveLetter(data: LetterFormData): Letter {

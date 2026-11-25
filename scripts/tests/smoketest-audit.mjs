@@ -73,8 +73,8 @@ const uploadSrc = readFileSync('artifacts/pwd-tools/src/pages/AuditReply/AuditUp
     ['routed page renders the landing', /AuditLanding/],
     ['routed page renders the upload step', /AuditUploadStep/],
     ['step machine holds all three steps', /"landing"[\s\S]*"upload"[\s\S]*"workspace"|AuditStep/],
-    ['resume uses stored replies', /audit-reply-data/],
-    ['resume uses stored fresh paras', /audit-fresh-paras/],
+    ['resume uses stored replies', /readAuditReplies\(JSON\.parse\(localStorage\.getItem\(REPLIES_KEY\)/],
+    ['resume uses stored fresh paras', /readFreshParas\(JSON\.parse\(localStorage\.getItem\(FRESH_KEY\)/],
     ['document.title set on the route', /useDocumentTitle\s*\(/],
     ['home affordance via ToolShell', /<ToolShell\b/],
 ].forEach(([label, re]) => check(`AuditReply route: ${label}`, re.test(routeSrc)));
@@ -104,7 +104,7 @@ const romanSrc = readFileSync('artifacts/pwd-tools/src/lib/roman-to-hindi.ts', '
 
 // ── 4. Routing ───────────────────────────────────────────────────────────────
 const appSrc = readFileSync('artifacts/pwd-tools/src/App.tsx', 'utf8');
-check('App.tsx: AuditReplyPage imported', /import.*AuditReplyPage/.test(appSrc));
+check('App.tsx: AuditReplyPage imported', /import.*AuditReplyPage|AuditReplyPage.*import\(/.test(appSrc));
 check('App.tsx: route /audit-reply registered', /path.*audit-reply/.test(appSrc));
 
 // ── 5. Home tile ─────────────────────────────────────────────────────────────
