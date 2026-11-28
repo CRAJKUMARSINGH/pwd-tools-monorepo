@@ -517,9 +517,6 @@ export default function Ifms30BillInput() {
                     </div>
 
                     <div>
-                        <div style={{ marginBottom: "12px", borderRadius: "12px", border: "1px solid #f48fb1", background: "linear-gradient(135deg, #fce4ec, #f8bbd0)", padding: "12px 14px" }}>
-                            <h2 style={{ color: "#880e4f", fontSize: "0.95rem", fontWeight: 700 }}>PREVIEW</h2>
-                        </div>
                         <div style={{ overflowX: "auto", border: "1px solid #d7a259", borderRadius: "10px", background: "#fff", padding: "12px", boxShadow: "0 3px 14px rgba(120, 70, 0, 0.1)" }}>
                             <BillOutput calculation={calculation} />
                         </div>
